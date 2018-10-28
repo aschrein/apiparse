@@ -13,13 +13,13 @@ message(STATUS "   - Binary path      : ${LLVM_TOOLS_BINARY_DIR}")
 list(APPEND CMAKE_MODULE_PATH ${LLVM_CMAKE_DIR})
 #include(AddLLVM)
 
+
 include_directories(${LLVM_INCLUDE_DIRS})
 link_directories(${LLVM_LIBRARY_DIRS})
 add_definitions(${LLVM_DEFINITIONS})
 
 add_executable(apiparse main.cpp)
 add_executable(example example.cpp)
-add_executable(interceptor interceptor.cpp)
 
 target_link_libraries(apiparse PRIVATE
     clangASTMatchers
@@ -65,5 +65,47 @@ endif()
 
 install(TARGETS apiparse DESTINATION bin)
 install(TARGETS example DESTINATION bin)
-install(TARGETS interceptor DESTINATION bin)
 configure_file(include_d3d11.cpp ${CMAKE_CURRENT_BINARY_DIR}/include_d3d11.cpp COPYONLY)
+
+##################################
+##################################
+##################################
+set (CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
+
+
+add_library (injectee_iat MODULE
+    injectee_iat.cpp
+)
+
+set_target_properties (injectee_iat PROPERTIES
+    PREFIX ""
+)
+
+set_target_properties (injectee_iat PROPERTIES LINK_FLAGS "/ENTRY:DllMainStartup")
+
+
+install (TARGETS injectee_iat LIBRARY DESTINATION bin)
+
+add_executable (injector
+    injector.cpp
+)
+set_target_properties (injector PROPERTIES
+    OUTPUT_NAME inject
+)
+target_link_libraries (injector
+    ${GETOPT_LIBRARIES}
+)
+install (TARGETS injector RUNTIME DESTINATION bin)
+
+##################################
+##################################
+##################################
+add_library (d3d11shim MODULE
+    d3d11shim.cpp
+)
+# link with vcruntimed.lib and ucrtd.lib
+set_target_properties (d3d11shim PROPERTIES LINK_FLAGS "/ENTRY:DllMainStartup")
+target_link_libraries (d3d11shim
+    vcruntimed
+	ucrtd
+)
