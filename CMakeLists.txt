@@ -72,16 +72,17 @@ configure_file(include_d3d11.cpp ${CMAKE_CURRENT_BINARY_DIR}/include_d3d11.cpp C
 ##################################
 set (CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 
-set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /SUBSYSTEM:WINDOWS /ENTRY:DllMainStartup")
+
 add_library (injectee_iat MODULE
     injectee_iat.cpp
 )
+# set_target_properties(injectee_iat PROPERTIES LINK_FLAGS "${LINK_FLAGS} /SUBSYSTEM:WINDOWS /ENTRY:DllMainStartup")
 # target_compile_options(injectee_iat PRIVATE "/clr /EHs-")
 # set_target_properties (injectee_iat PROPERTIES
     # PREFIX ""
 # )  /NODEFAULTLIB /MD
 
-#set_target_properties (injectee_iat PROPERTIES LINK_FLAGS "/ENTRY:DllMainStartup /NODEFAULTLIB")
+# set_target_properties (injectee_iat PROPERTIES LINK_FLAGS "/ENTRY:DllMainStartup /NODEFAULTLIB")
 
 
 install (TARGETS injectee_iat LIBRARY DESTINATION bin)

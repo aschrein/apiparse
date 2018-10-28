@@ -13,7 +13,7 @@
 #define NOMINMAX
 //#define __STDC_WANT_LIB_EXT1__ 1
 //#define _NO_CRT_STDIO_INLINE 1
-
+#include <tchar.h>
 #include <winsock2.h>
 #include <assert.h>
 #include <stdio.h>
@@ -54,7 +54,7 @@ debugPrintf(const char *format, ...)
 
   va_list ap;
   va_start(ap, format);
-  _vsnprintf(buf, sizeof buf, format, ap);
+  _vsnprintf_s(buf, sizeof buf, format, ap);
   va_end(ap);
 
   OutputDebugStringA(buf);
@@ -97,9 +97,7 @@ struct FunctionHook
   void **orig;
   void *hook;
 };
-// this singleton allows you to compile in code that defines a hook for a given library
-// (and it will be registered). Then when the renderdoc library is initialised in the target
-// program RegisterHooks() will be called to set up the hooks.
+
 class LibraryHooks
 {
 public:
@@ -334,6 +332,9 @@ struct CachedHookData
       lowername[i] = 0;
     }
 
+    if (strstr(lowername, "injectee_iat.dll") == lowername)
+      return;
+
 #if VERBOSE_DEBUG_HOOK
     debugPrintf("=== ApplyHooks(%s, %p)", modName, module);
 #endif
@@ -341,7 +342,7 @@ struct CachedHookData
     // set module pointer if we are hooking exports from this module
     for (auto it = DllHooks.begin(); it != DllHooks.end(); ++it)
     {
-      if (!strcmp(it->first.c_str(), modName))
+      if (!_stricmp(it->first.c_str(), modName))
       {
         if (it->second.module == NULL)
         {
@@ -402,11 +403,11 @@ struct CachedHookData
     }
 
     // for safety (and because we don't need to), ignore these modules
-    if (!strcmp(modName, "kernel32.dll") || !strcmp(modName, "powrprof.dll") ||
-      !strcmp(modName, "CoreMessaging.dll") || !strcmp(modName, "opengl32.dll") ||
-      !strcmp(modName, "gdi32.dll") || !strcmp(modName, "gdi32full.dll") ||
-      !strcmp(modName, "nvoglv32.dll") || !strcmp(modName, "nvoglv64.dll") ||
-      !strcmp(modName, "nvcuda.dll") || strstr(lowername, "cudart") == lowername ||
+    if (!_stricmp(modName, "kernel32.dll") || !_stricmp(modName, "powrprof.dll") ||
+      !_stricmp(modName, "CoreMessaging.dll") || !_stricmp(modName, "opengl32.dll") ||
+      !_stricmp(modName, "gdi32.dll") || !_stricmp(modName, "gdi32full.dll") ||
+      !_stricmp(modName, "nvoglv32.dll") || !_stricmp(modName, "nvoglv64.dll") ||
+      !_stricmp(modName, "nvcuda.dll") || strstr(lowername, "cudart") == lowername ||
       strstr(lowername, "msvcr") == lowername || strstr(lowername, "msvcp") == lowername ||
       strstr(lowername, "nv-vk") == lowername || strstr(lowername, "amdvlk") == lowername ||
       strstr(lowername, "igvk") == lowername || strstr(lowername, "nvopencl") == lowername ||
@@ -467,7 +468,7 @@ struct CachedHookData
       DllHookset *hookset = NULL;
 
       for (auto it = DllHooks.begin(); it != DllHooks.end(); ++it)
-        if (!strcmp(it->first.c_str(), dllName))
+        if (!_stricmp(it->first.c_str(), dllName))
           hookset = &it->second;
 
       if (hookset && importDesc->OriginalFirstThunk > 0 && importDesc->FirstThunk > 0)
@@ -488,7 +489,7 @@ struct CachedHookData
           {
             bool operator()(const FunctionHook &a, const char *b)
             {
-              return strcmp(a.function.c_str(), b) < 0;
+              return _stricmp(a.function.c_str(), b) < 0;
             }
           };
 
@@ -527,7 +528,7 @@ struct CachedHookData
                       importName, hook_find());
 
                   if (found != hookset->FunctionHooks.end() &&
-                    !strcmp(found->function.c_str(), importName) && ownmodule != module)
+                    !_stricmp(found->function.c_str(), importName) && ownmodule != module)
                   {
                     bool already = false;
                     bool applied;
@@ -590,7 +591,7 @@ struct CachedHookData
             hookset->FunctionHooks.end(), importName, hook_find());
 
           if (found != hookset->FunctionHooks.end() &&
-            !strcmp(found->function.c_str(), importName) && ownmodule != module)
+            !_stricmp(found->function.c_str(), importName) && ownmodule != module)
           {
             bool already = false;
             bool applied;
@@ -950,7 +951,7 @@ FARPROC WINAPI Hooked_GetProcAddress(HMODULE mod, LPCSTR func)
 
 void LibraryHooks::RegisterFunctionHook(const char *libraryName, const FunctionHook &hook)
 {
-  if (!strcmp(libraryName, "kernel32.dll"))
+  if (!_stricmp(libraryName, "kernel32.dll"))
   {
     if (hook.function == "LoadLibraryA" || hook.function == "LoadLibraryW" ||
       hook.function == "LoadLibraryExA" || hook.function == "LoadLibraryExW" ||
@@ -1513,7 +1514,7 @@ static BOOL add_hooks()
   return TRUE;
 }
 
-BOOL APIENTRY DllMainStartup(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserved)
+BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserved)
 {
   if (ul_reason_for_call == DLL_PROCESS_ATTACH)
   {
