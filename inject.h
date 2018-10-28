@@ -13,13 +13,13 @@
 
 #include <windows.h>
 #include <sddl.h>
+#include <vector>
+#include <functional>
+#include <map>
 
 #define _countof(x) (sizeof(x)/sizeof(x[0]))
 
 static void
-#ifdef __GNUC__
-    __attribute__ ((format (printf, 1, 2)))
-#endif
 debugPrintf(const char *format, ...);
 
 

@@ -72,19 +72,56 @@ configure_file(include_d3d11.cpp ${CMAKE_CURRENT_BINARY_DIR}/include_d3d11.cpp C
 ##################################
 set (CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 
-
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /SUBSYSTEM:WINDOWS /ENTRY:DllMainStartup")
 add_library (injectee_iat MODULE
     injectee_iat.cpp
 )
+# target_compile_options(injectee_iat PRIVATE "/clr /EHs-")
+# set_target_properties (injectee_iat PROPERTIES
+    # PREFIX ""
+# )  /NODEFAULTLIB /MD
 
-set_target_properties (injectee_iat PROPERTIES
-    PREFIX ""
-)
-
-set_target_properties (injectee_iat PROPERTIES LINK_FLAGS "/ENTRY:DllMainStartup")
+#set_target_properties (injectee_iat PROPERTIES LINK_FLAGS "/ENTRY:DllMainStartup /NODEFAULTLIB")
 
 
 install (TARGETS injectee_iat LIBRARY DESTINATION bin)
+string (REGEX REPLACE "/GR *" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /GR-")
+
+# Disable C++ exceptions
+add_definitions (-D_HAS_EXCEPTIONS=0)
+string (REGEX REPLACE "/EHsc *" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /EHs-c-")
+
+# Enable math constants defines
+add_definitions (-D_USE_MATH_DEFINES)
+
+# No min/max macros
+add_definitions (-DNOMINMAX)
+
+# Adjust warnings
+add_definitions (-D_CRT_SECURE_NO_DEPRECATE -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_WARNINGS)
+add_definitions (-D_SCL_SECURE_NO_DEPRECATE -D_SCL_SECURE_NO_WARNINGS)
+foreach (flag_var
+        CMAKE_C_FLAGS CMAKE_C_FLAGS_DEBUG CMAKE_C_FLAGS_RELEASE CMAKE_C_FLAGS_MINSIZEREL CMAKE_C_FLAGS_RELWITHDEBINFO
+        CMAKE_CXX_FLAGS CMAKE_CXX_FLAGS_DEBUG CMAKE_CXX_FLAGS_RELEASE CMAKE_CXX_FLAGS_MINSIZEREL CMAKE_CXX_FLAGS_RELWITHDEBINFO
+    )
+        if (${flag_var} MATCHES "/MTd")
+            string (REGEX REPLACE "/MTd" "/MD" ${flag_var} "${${flag_var}}")
+        endif ()
+		if (${flag_var} MATCHES "/MDd")
+            string (REGEX REPLACE "/MDd" "/MD" ${flag_var} "${${flag_var}}")
+        endif ()
+    endforeach (flag_var)
+# target_link_libraries (injectee_iat
+    # #vcruntime
+	# libucrt
+	# libvcruntime
+	# libucrt
+	# msvcprt
+	# msvcrt
+	# libcmt
+# )
 
 add_executable (injector
     injector.cpp
@@ -105,7 +142,8 @@ add_library (d3d11shim MODULE
 )
 # link with vcruntimed.lib and ucrtd.lib
 set_target_properties (d3d11shim PROPERTIES LINK_FLAGS "/ENTRY:DllMainStartup")
-target_link_libraries (d3d11shim
-    vcruntimed
-	ucrtd
-)
+# target_link_libraries (d3d11shim
+	# vcruntime
+    # vcruntimed
+	# ucrtd
+# )
