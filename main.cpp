@@ -1662,10 +1662,13 @@ public:
     if (auto const *pFD = llvm::dyn_cast<clang::FunctionDecl>(D))
     {
       print = !pFD->getDeclContext()->isRecord() && (
-        pFD->getNameAsString().find("D3D11") == 0
-        || pFD->getNameAsString().find("ID3D11") == 0
+        pFD->getNameAsString().find("D3D") == 0
+        || pFD->getNameAsString().find("ID3D") == 0
         || pFD->getNameAsString().find("IDXGI") == 0);
-      //print = print && pFD->hasBody();
+      print = print && !(0
+        || pFD->getNameAsString().find("ID3D10") == 0
+       ||  pFD->getNameAsString().find("D3D10") == 0
+        );
       if (print) {
         g_ss << "####################################################\n";
         g_ss << "############### GLOBAL FUNCTION ####################\n";
@@ -1691,7 +1694,7 @@ public:
     {
       print = 0
         //|| pRD->getNameAsString().find("D3D11") == 0
-        || pRD->getNameAsString().find("ID3D11") == 0
+        || pRD->getNameAsString().find("ID3D") == 0
         || pRD->getNameAsString().find("IDXGI") == 0
         || pRD->getNameAsString().find("IUnknown") == 0
         //|| pRD->getNameAsString().find("D3D_") == 0
@@ -1699,7 +1702,12 @@ public:
         //|| pRD->getNameAsString().find("D3DCOLORVALUE") == 0
         //|| pRD->getNameAsString().find("DXGI") == 0
         ;
-      print = print && pRD->isCompleteDefinition();
+      print = print && pRD->isCompleteDefinition() || pRD->getNameAsString().find("ID3DDeviceContextState") == 0;
+      print = print && !(0
+        || pRD->getNameAsString().find("ID3D10") == 0
+        || pRD->getNameAsString().find("D3D10") == 0
+        );
+      print = print || pRD->getNameAsString().find("ID3D10Blob") == 0;
       if (print)
       {
         g_ss << "####################################################\n";

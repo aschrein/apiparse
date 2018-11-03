@@ -340,7 +340,7 @@ main(int argc, char *argv[])
             bAttachDwm = TRUE;
         }
     } else {
-        std::string commandLine = "example.exe";
+      std::string commandLine = argv[1];// "example.exe";
         
 
         STARTUPINFOA startupInfo;
