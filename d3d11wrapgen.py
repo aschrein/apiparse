@@ -29,69 +29,78 @@ def dumpMethod(obj, Meth, declOnly):
 				print(Ind(2) + Meth.params[Pi][0] + " " + Meth.params[Pi][1] + com)
 			print(Ind(0) + ") {")
 			print(Ind(2) + "out() << \"" + obj + "::" + Meth.name + "\\n\";")
-			if Meth.name == "QueryInterface":
-				print(Ind(2) + "return QueryInterfaceImpl(m_pWrapped, riid, ppvObject);")
-			elif Meth.name == "GetParent":
-				print(Ind(2) + "return GetParentImpl(m_pWrapped, riid, ppParent);")
+			if Meth.retTy == "void":
+				print(Ind(2) + "m_pWrapped->" + Meth.name + "(")
 			else:
-				if Meth.retTy == "void":
-					print(Ind(2) + "m_pWrapped->" + Meth.name + "(")
+				print(Ind(2) + "auto ret = m_pWrapped->" + Meth.name + "(")
+			for Pi in range(0, PN):
+				com = ", "
+				if Pi == PN - 1:
+					com = ""
+				if "*" in Meth.params[Pi][0] and not "**" in Meth.params[Pi][0]:
+					print(Ind(4) + "unwrap(" + Meth.params[Pi][1] + ")" + com)
 				else:
-					print(Ind(2) + "auto ret = m_pWrapped->" + Meth.name + "(")
+					print(Ind(4) + Meth.params[Pi][1] + com)
+			print(Ind(2) + ");")
+
+			if Meth.name in ["GetDevice"]:
+				print(Ind(2) + "if(*" + Meth.params[-1][1] + ")")
+				print(Ind(4) + "HandleWrap(__uuidof(ID3D11Device), (void**)" + Meth.params[-1][1] + ");")
+			elif Meth.name in ["GetResource"]:
+				print(Ind(2) + "if(*" + Meth.params[-1][1] + ")")
+				print(Ind(4) + "HandleWrap(__uuidof(ID3D11Resource), (void**)" + Meth.params[-1][1] + ");")
+			elif Meth.name in ["OpenSharedResource", "OpenSharedFence", "CreateFence"]:
+				print(Ind(2) + "if(*" + Meth.params[-1][1] + ")")
+				print(Ind(4) + "HandleWrap(ReturnedInterface, (void**)" + Meth.params[-1][1] + ");")
+			elif Meth.name in ["GetCoreWindow"]:
+				print(Ind(2) + "if(*" + Meth.params[-1][1] + ")")
+				print(Ind(4) + "HandleWrap(refiid, (void**)" + Meth.params[-1][1] + ");")
+			elif Meth.name in ["OpenSharedResourceByName", "OpenSharedResource1"]:
+				print(Ind(2) + "if(*" + Meth.params[-1][1] + ")")
+				print(Ind(4) + "HandleWrap(returnedInterface, (void**)" + Meth.params[-1][1] + ");")
+			elif Meth.name in ["QueryInterface", "GetParent",
+			"GetBuffer",
+			"EnumAdapterByLuid", "EnumWarpAdapter"]:
+				print(Ind(2) + "{")
+				print(Ind(4) + "if(!ret) {")
+				print(Ind(6) + "HandleWrap(riid, " + Meth.params[-1][1] + ");")
+				print(Ind(4) + "}")
+				print(Ind(2) + "}")
+			elif Meth.name in ["GetDecoderBuffer"]:
+				print(Ind(2) + "assert(false && \"Wrap not implemented; Emit Seg Fault\");")
+			else:
 				for Pi in range(0, PN):
-					com = ", "
-					if Pi == PN - 1:
-						com = ""
-					if "*" in Meth.params[Pi][0]:
-						print(Ind(4) + "unwrap(" + Meth.params[Pi][1] + ")" + com)
-					else:
-						print(Ind(4) + Meth.params[Pi][1] + com)
-				print(Ind(2) + ");")
-				if Meth.name in ["QueryInterface", "GetParent", "GetDevice",
-				"GetBuffer", "GetDecoderBuffer", "OpenSharedResource", "GetResource",
-				"GetCoreWindow", "OpenSharedResource1", "OpenSharedResourceByName",
-				"EnumAdapterByLuid", "EnumWarpAdapter", "OpenSharedFence", "CreateFence", "Map"]:
-					print(Ind(2) + "assert(false && \"Wrap not implemented; Emit Seg Fault\");")
-				else:
-					for Pi in range(0, PN):
-						if "**" in Meth.params[Pi][0]:
-							RawType = Meth.params[Pi][0].split(" ")[0]
-							if RawType == "struct":
-								RawType = Meth.params[Pi][0].split(" ")[1]
-							print(Ind(2) + "if (*" + Meth.params[Pi][1] + ")")
-							#print(Ind(4) + "*" + Meth.params[Pi][1] + " = new Wrapped" + RawType + "(*" + Meth.params[Pi][1] + ");")
-							print(Ind(4) + "*" + Meth.params[Pi][1] + " = getWrapper<" + RawType +
-							", Wrapped" + RawType + ">(*" + Meth.params[Pi][1] + ");")
-				if Meth.retTy != "void":
-					print(Ind(2) + "return ret;")
+					if "**" in Meth.params[Pi][0]:
+						RawType = Meth.params[Pi][0].split(" ")[0]
+						if RawType == "struct":
+							RawType = Meth.params[Pi][0].split(" ")[1]
+						print(Ind(2) + "if (*" + Meth.params[Pi][1] + ")")
+						#print(Ind(4) + "*" + Meth.params[Pi][1] + " = new Wrapped" + RawType + "(*" + Meth.params[Pi][1] + ");")
+						print(Ind(4) + "*" + Meth.params[Pi][1] + " = getWrapper<" + RawType +
+						", Wrapped" + RawType + ">(*" + Meth.params[Pi][1] + ");")
+			if Meth.retTy != "void":
+				print(Ind(2) + "return ret;")
 			print(Ind(0) + "}")
 	
-def genQueryImpl(name, ctx):
-	print("""template<typename T> HRESULT """ + name + """Impl(
-  T *pObj,
+def genQueryImpl(ctx):
+	print("""template<typename T> void HandleWrap(
   const IID & riid, 
-  void ** ppvObject) {""")
-	print(Ind(2) + "HRESULT hr = S_OK;")
+  T ** ppvObject) {""")
+	#print(Ind(2) + "HRESULT hr = S_OK;")
 	for TyName, Ty in ctx.apiTypes.items():
 		if TyName == "ID3DInclude":
 			continue
 		print(Ind(2) + "if(riid == __uuidof(" + Ty.name + ")) {")
-		print(Ind(4) + "hr = pObj->" + name + "(riid, ppvObject);")
-		print(Ind(4) + "if(SUCCEEDED(hr)) {")
-		print(Ind(6) + Ty.name + " *real = (" + Ty.name + " *)(*ppvObject);")
-		print(Ind(6) + "*ppvObject = getWrapper<" + Ty.name +", Wrapped" + Ty.name + ">(real);")
-		print(Ind(6) + "return S_OK;")
-		print(Ind(4) + "} else {")
-		print(Ind(6) + "*ppvObject = NULL;")
-		print(Ind(6) + "return hr;")
-		print(Ind(4) + "}")
+		print(Ind(4) + "*ppvObject = (T*)getWrapper<" + Ty.name +
+						", Wrapped" + Ty.name + ">((" + Ty.name + "*)*ppvObject);")
+		print(Ind(4) + "return;")
 		print(Ind(2) + "}")
 	print(Ind(2) + "{")
-	print(Ind(4) + "out() << \"[" + name + "/WARNING] Unknown riid:\" << riid << \"\\n\";")
-	print(Ind(4) + "return pObj->" + name + "(riid, ppvObject);")
+	print(Ind(4) + "out() << \"[WARNING] Unknown riid:\" << riid << \"\\n\";")
+	#print(Ind(4) + "return pObj->" + name + "(riid, ppvObject);")
 	#print(Ind(4) + "assert(false && \"Wrap not implemented; Emit Seg Fault\");")
 	print(Ind(2) + "}")
-	print(Ind(2) + "return S_OK;")
+	#print(Ind(2) + "return S_OK;")
 	print(Ind(0) + "}")
 
 def genWrappers(ctx):
@@ -101,6 +110,10 @@ def genWrappers(ctx):
 #include <d3d11_3.h>
 #include <d3d11_4.h>
 #include <d3dcompiler.h>
+#include <dxgi.h>
+#include <dxgi1_2.h>
+#include <dxgi1_3.h>
+#include <dxgidebug.h>
 #include <unordered_map>
 #include <fstream>
 #include <assert.h>
@@ -177,8 +190,7 @@ std::ostream& operator<<(std::ostream& os, REFGUID guid) {
   return os;
 }
 """)
-	genQueryImpl("QueryInterface", ctx)
-	genQueryImpl("GetParent", ctx)
+	genQueryImpl(ctx)
 
 	for TyName, Ty in ctx.apiTypes.items():
 		print("#if 0")
@@ -188,7 +200,10 @@ std::ostream& operator<<(std::ostream& os, REFGUID guid) {
 		print("private:")
 		print(Ind(2) + TyName + " *m_pWrapped;")
 		print("public:")
-		print(Ind(2) + "Wrapped" + TyName + "(" + TyName + " *pWrapped) : m_pWrapped(pWrapped) {}")
+		print(Ind(2) + "Wrapped" + TyName + "(" + TyName + " *pWrapped) : m_pWrapped(pWrapped) {")
+		if Ty.hasBase(ctx, "IUnknown"):
+			print(Ind(4) + "m_pWrapped->AddRef();")
+		print(Ind(2) + "}")
 
 		MethSet = {}
 		for Meth in Ty.methods:
@@ -219,6 +234,7 @@ std::ostream& operator<<(std::ostream& os, REFGUID guid) {
 		PN = len(FTy.params)
 		if PN == 0:
 			print(Ind(0) + FTy.retTy + " Wrapped" + FTy.name + "() {")
+			print(Ind(2) + "out() << \"" + FTy.name + "\\n\";")
 			print(Ind(2) + "return " + FTy.name + "();")
 			print(Ind(0) + "}")
 		else:
@@ -229,6 +245,7 @@ std::ostream& operator<<(std::ostream& os, REFGUID guid) {
 					com = ""
 				print(Ind(2) + FTy.params[Pi][0] + " " + FTy.params[Pi][1] + com)
 			print(Ind(0) + ") {")
+			print(Ind(2) + "out() << \"" + FTy.name + "\\n\";")
 			if FTy.retTy == "void":
 				print(Ind(2) + "" + FTy.name + "(")
 			else:
@@ -240,7 +257,11 @@ std::ostream& operator<<(std::ostream& os, REFGUID guid) {
 				print(Ind(4) + FTy.params[Pi][1] + com)
 			print(Ind(2) + ");")
 			if FTy.name in ["D3DReflect"]:
-				print(Ind(2) + "(void)*(int*)nullptr; // Wrap not implemented; Emit Seg Fault")
+				print(Ind(2) + "assert(false && \"Wrap not implemented; Emit Seg Fault\");")
+			elif FTy.name in ["DXGIGetDebugInterface", "DXGIGetDebugInterface1",
+			"CreateDXGIFactory2", "CreateDXGIFactory", "CreateDXGIFactory1"]:
+				print(Ind(2) + "if(ret)")
+				print(Ind(4) + "HandleWrap(riid, (void**)" + FTy.params[-1][1] + ");")
 			else:
 				for Pi in range(0, PN):
 					if "**" in FTy.params[Pi][0]:
@@ -250,7 +271,7 @@ std::ostream& operator<<(std::ostream& os, REFGUID guid) {
 						print(Ind(2) + "if (*" + FTy.params[Pi][1] + ")")
 						print(Ind(4) + "*" + FTy.params[Pi][1] + " = getWrapper<" + RawType +
 						", Wrapped" + RawType + ">(*" + FTy.params[Pi][1] + ");")
-			print(Ind(2) + "out() << \"" + FTy.name + "\\n\";")
+			
 			if FTy.retTy != "void":
 				print(Ind(2) + "return ret;")
 			print(Ind(0) + "}")

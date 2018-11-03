@@ -1664,7 +1664,7 @@ public:
       print = !pFD->getDeclContext()->isRecord() && (
         pFD->getNameAsString().find("D3D") == 0
         || pFD->getNameAsString().find("ID3D") == 0
-        || pFD->getNameAsString().find("DXGI") == 0
+        || pFD->getNameAsString().find("DXGI") != std::string::npos
         || pFD->getNameAsString().find("IDXGI") == 0);
       print = print && !(0
         || pFD->getNameAsString().find("ID3D10") == 0

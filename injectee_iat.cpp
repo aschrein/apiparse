@@ -43,6 +43,9 @@
 #include <d3d11_2.h>
 #include <d3d11_3.h>
 #include <d3d11_4.h>
+#include <dxgi.h>
+#include <dxgi1_2.h>
+#include <dxgi1_3.h>
 
 extern HRESULT WrappedD3D11CreateDevice(
   IDXGIAdapter * pAdapter,
@@ -70,7 +73,19 @@ extern HRESULT WrappedD3D11CreateDeviceAndSwapChain(
   D3D_FEATURE_LEVEL * pFeatureLevel,
   ID3D11DeviceContext ** ppImmediateContext
 );
-
+extern HRESULT WrappedCreateDXGIFactory(
+  const IID & riid,
+  void ** ppFactory
+);
+extern HRESULT WrappedCreateDXGIFactory1(
+  const IID & riid,
+  void ** ppFactory
+);
+extern HRESULT WrappedCreateDXGIFactory2(
+  UINT Flags,
+  const IID & riid,
+  void ** ppFactory
+);
 
 static int VERBOSITY = 0;
 #define NOOP 0
@@ -242,104 +257,35 @@ private:
 
 D3D11Hook D3D11Hook::d3d11hooks;
 
+typedef HRESULT(WINAPI *PFN_CREATE_DXGI_FACTORY)(REFIID, void **);
+typedef HRESULT(WINAPI *PFN_CREATE_DXGI_FACTORY2)(UINT, REFIID, void **);
+typedef HRESULT(WINAPI *PFN_GET_DEBUG_INTERFACE)(REFIID, void **);
+typedef HRESULT(WINAPI *PFN_GET_DEBUG_INTERFACE1)(UINT, REFIID, void **);
 class DXGIHook : LibraryHook
 {
 public:
   void RegisterHooks()
   {
-    RDCLOG("Registering DXGI hooks");
 
     LibraryHooks::RegisterLibraryHook("dxgi.dll", NULL);
 
-    CreateDXGIFactory.Register("dxgi.dll", "CreateDXGIFactory", CreateDXGIFactory_hook);
-    CreateDXGIFactory1.Register("dxgi.dll", "CreateDXGIFactory1", CreateDXGIFactory1_hook);
-    CreateDXGIFactory2.Register("dxgi.dll", "CreateDXGIFactory2", CreateDXGIFactory2_hook);
-    GetDebugInterface.Register("dxgi.dll", "DXGIGetDebugInterface", DXGIGetDebugInterface_hook);
-    GetDebugInterface1.Register("dxgi.dll", "DXGIGetDebugInterface1", DXGIGetDebugInterface1_hook);
+    CreateDXGIFactory.Register("dxgi.dll", "CreateDXGIFactory", WrappedCreateDXGIFactory);
+    CreateDXGIFactory1.Register("dxgi.dll", "CreateDXGIFactory1", WrappedCreateDXGIFactory1);
+    CreateDXGIFactory2.Register("dxgi.dll", "CreateDXGIFactory2", WrappedCreateDXGIFactory2);
+    //GetDebugInterface.Register("dxgi.dll", "DXGIGetDebugInterface", WrappedDXGIGetDebugInterface);
+    //GetDebugInterface1.Register("dxgi.dll", "DXGIGetDebugInterface1", WrappedDXGIGetDebugInterface1);
   }
 
 private:
   static DXGIHook dxgihooks;
 
-  RenderDocAnalysis m_RenderDocAnalysis;
 
   HookedFunction<PFN_CREATE_DXGI_FACTORY> CreateDXGIFactory;
   HookedFunction<PFN_CREATE_DXGI_FACTORY> CreateDXGIFactory1;
   HookedFunction<PFN_CREATE_DXGI_FACTORY2> CreateDXGIFactory2;
-  HookedFunction<PFN_GET_DEBUG_INTERFACE> GetDebugInterface;
-  HookedFunction<PFN_GET_DEBUG_INTERFACE1> GetDebugInterface1;
+  //HookedFunction<PFN_GET_DEBUG_INTERFACE> GetDebugInterface;
+  //HookedFunction<PFN_GET_DEBUG_INTERFACE1> GetDebugInterface1;
 
-  static HRESULT WINAPI CreateDXGIFactory_hook(__in REFIID riid, __out void **ppFactory)
-  {
-    if (ppFactory)
-      *ppFactory = NULL;
-    HRESULT ret = dxgihooks.CreateDXGIFactory()(riid, ppFactory);
-
-    if (SUCCEEDED(ret))
-      RefCountDXGIObject::HandleWrap(riid, ppFactory);
-
-    return ret;
-  }
-
-  static HRESULT WINAPI CreateDXGIFactory1_hook(__in REFIID riid, __out void **ppFactory)
-  {
-    if (ppFactory)
-      *ppFactory = NULL;
-    HRESULT ret = dxgihooks.CreateDXGIFactory1()(riid, ppFactory);
-
-    if (SUCCEEDED(ret))
-      RefCountDXGIObject::HandleWrap(riid, ppFactory);
-
-    return ret;
-  }
-
-  static HRESULT WINAPI CreateDXGIFactory2_hook(UINT Flags, REFIID riid, void **ppFactory)
-  {
-    if (ppFactory)
-      *ppFactory = NULL;
-    HRESULT ret = dxgihooks.CreateDXGIFactory2()(Flags, riid, ppFactory);
-
-    if (SUCCEEDED(ret))
-      RefCountDXGIObject::HandleWrap(riid, ppFactory);
-
-    return ret;
-  }
-
-  static HRESULT WINAPI DXGIGetDebugInterface_hook(REFIID riid, void **ppDebug)
-  {
-    if (ppDebug)
-      *ppDebug = NULL;
-
-    if (riid == __uuidof(IDXGraphicsAnalysis))
-    {
-      dxgihooks.m_RenderDocAnalysis.AddRef();
-      *ppDebug = &dxgihooks.m_RenderDocAnalysis;
-      return S_OK;
-    }
-
-    if (dxgihooks.GetDebugInterface())
-      return dxgihooks.GetDebugInterface()(riid, ppDebug);
-    else
-      return E_NOINTERFACE;
-  }
-
-  static HRESULT WINAPI DXGIGetDebugInterface1_hook(UINT Flags, REFIID riid, void **ppDebug)
-  {
-    if (ppDebug)
-      *ppDebug = NULL;
-
-    if (riid == __uuidof(IDXGraphicsAnalysis))
-    {
-      dxgihooks.m_RenderDocAnalysis.AddRef();
-      *ppDebug = &dxgihooks.m_RenderDocAnalysis;
-      return S_OK;
-    }
-
-    if (dxgihooks.GetDebugInterface1())
-      return dxgihooks.GetDebugInterface1()(Flags, riid, ppDebug);
-    else
-      return E_NOINTERFACE;
-  }
 };
 
 DXGIHook DXGIHook::dxgihooks;

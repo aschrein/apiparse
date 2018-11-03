@@ -9,6 +9,13 @@ class APIType:
 			out.append(ctx.apiTypes[baseName])
 			ctx.apiTypes[baseName].getBases(ctx, out)
 		return out
+	def hasBase(self, ctx, base):
+		for baseName in self.bases:
+			if baseName == base:
+				return True;
+			if ctx.apiTypes[baseName].hasBase(ctx, base):
+				return True
+		return False
 	def dump(self, ctx):
 		print("begin class " + self.name)
 		print("inherits:")
