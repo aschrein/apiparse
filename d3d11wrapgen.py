@@ -1,6 +1,11 @@
 def Ind(N):
 	return " " * N
-
+def countPtrs(txt):
+	result = 0
+	for char in txt:
+		if char == "*":
+			result += 1
+	return result
 def dumpMethod(obj, Meth, declOnly):
 	PN = len(Meth.params)
 	if PN == 0:
@@ -8,7 +13,7 @@ def dumpMethod(obj, Meth, declOnly):
 			print(Ind(2) + Meth.retTy + " " + Meth.name + "() override;")
 		else:
 			print(Ind(0) + Meth.retTy + " Wrapped" + obj + "::" + Meth.name + "() {")
-			print(Ind(2) + "out() << \"" + obj + "::" + Meth.name + "\\n\";")
+			print(Ind(2) + "out() << \"" + obj + "(\" << m_pWrapped << \")::" + Meth.name + "\\n\";")
 			print(Ind(2) + "return m_pWrapped->" + Meth.name + "();")
 			print(Ind(0) + "}")
 	else:
@@ -28,7 +33,24 @@ def dumpMethod(obj, Meth, declOnly):
 					com = ""
 				print(Ind(2) + Meth.params[Pi][0] + " " + Meth.params[Pi][1] + com)
 			print(Ind(0) + ") {")
-			print(Ind(2) + "out() << \"" + obj + "::" + Meth.name + "\\n\";")
+			
+			print(Ind(2) + "out() << \"" + obj + "(\" << m_pWrapped << \")::" + Meth.name + "\\n\";")
+			####### PRE-PROCESS
+			NumWrapped = ""
+			#if Meth.name in ["QueryInterface"]:
+				#NumWrapped = 
+			# for scalar, ptr and array types there is different unwrap code
+			UnwrapTable = {}
+			for Pi in range(0, PN):
+				if countPtrs(Meth.params[Pi][0]) == 1:
+					UnwrapTable[Meth.params[Pi][1]] = "unwrap(" + Meth.params[Pi][1] + ")"
+				elif countPtrs(Meth.params[Pi][0]) == 2 and not  Meth.name in ["QueryInterface"] and not "Get" in Meth.name:
+					print(Ind(2) + Meth.params[Pi][0].split("*")[0] + " *tmpUnwrap[32];")
+					print(Ind(2) + "for (int i = 0; i < " + NumWrapped + "; i++) tmpUnwrap[i] = " + Meth.params[Pi][1] + "[i];")
+					UnwrapTable[Meth.params[Pi][1]] = "tmpUnwrap"
+				else:
+					UnwrapTable[Meth.params[Pi][1]] = Meth.params[Pi][1]
+			####### CALL
 			if Meth.retTy == "void":
 				print(Ind(2) + "m_pWrapped->" + Meth.name + "(")
 			else:
@@ -37,12 +59,9 @@ def dumpMethod(obj, Meth, declOnly):
 				com = ", "
 				if Pi == PN - 1:
 					com = ""
-				if "*" in Meth.params[Pi][0] and not "**" in Meth.params[Pi][0]:
-					print(Ind(4) + "unwrap(" + Meth.params[Pi][1] + ")" + com)
-				else:
-					print(Ind(4) + Meth.params[Pi][1] + com)
+				print(Ind(4) + UnwrapTable[Meth.params[Pi][1]] + com)
 			print(Ind(2) + ");")
-
+			####### POST-PROCESS
 			if Meth.name in ["GetDevice"]:
 				print(Ind(2) + "if(*" + Meth.params[-1][1] + ")")
 				print(Ind(4) + "HandleWrap(__uuidof(ID3D11Device), (void**)" + Meth.params[-1][1] + ");")
@@ -96,7 +115,7 @@ def genQueryImpl(ctx):
 		print(Ind(4) + "return;")
 		print(Ind(2) + "}")
 	print(Ind(2) + "{")
-	print(Ind(4) + "out() << \"[WARNING] Unknown riid:\" << riid << \"\\n\";")
+	print(Ind(4) + "out() << \"[WARNING] Unknown(\" << *ppvObject << \") riid:\" << riid << \"\\n\";")
 	#print(Ind(4) + "return pObj->" + name + "(riid, ppvObject);")
 	#print(Ind(4) + "assert(false && \"Wrap not implemented; Emit Seg Fault\");")
 	print(Ind(2) + "}")
@@ -201,8 +220,9 @@ std::ostream& operator<<(std::ostream& os, REFGUID guid) {
 		print(Ind(2) + TyName + " *m_pWrapped;")
 		print("public:")
 		print(Ind(2) + "Wrapped" + TyName + "(" + TyName + " *pWrapped) : m_pWrapped(pWrapped) {")
+		print(Ind(4) + "out() << \"[CREATE] " + TyName + "(\" << m_pWrapped << \")\\n\";")
 		if Ty.hasBase(ctx, "IUnknown"):
-			print(Ind(4) + "m_pWrapped->AddRef();")
+			print(Ind(4) + "for (int i = 0; i < 10; i++) m_pWrapped->AddRef();")
 		print(Ind(2) + "}")
 
 		MethSet = {}
