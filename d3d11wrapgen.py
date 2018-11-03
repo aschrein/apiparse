@@ -8,7 +8,7 @@ def dumpMethod(obj, Meth, declOnly):
 			print(Ind(2) + Meth.retTy + " " + Meth.name + "() override;")
 		else:
 			print(Ind(0) + Meth.retTy + " Wrapped" + obj + "::" + Meth.name + "() {")
-			print(Ind(2) + "std::cout << \"" + obj + "::" + Meth.name + "\\n\";")
+			print(Ind(2) + "out() << \"" + obj + "::" + Meth.name + "\\n\";")
 			print(Ind(2) + "return m_pWrapped->" + Meth.name + "();")
 			print(Ind(0) + "}")
 	else:
@@ -28,36 +28,71 @@ def dumpMethod(obj, Meth, declOnly):
 					com = ""
 				print(Ind(2) + Meth.params[Pi][0] + " " + Meth.params[Pi][1] + com)
 			print(Ind(0) + ") {")
-			print(Ind(2) + "std::cout << \"" + obj + "::" + Meth.name + "\\n\";")
-			if Meth.retTy == "void":
-				print(Ind(2) + "m_pWrapped->" + Meth.name + "(")
+			print(Ind(2) + "out() << \"" + obj + "::" + Meth.name + "\\n\";")
+			if Meth.name == "QueryInterface":
+				print(Ind(2) + "return QueryInterfaceImpl(m_pWrapped, riid, ppvObject);")
+			elif Meth.name == "GetParent":
+				print(Ind(2) + "return GetParentImpl(m_pWrapped, riid, ppParent);")
 			else:
-				print(Ind(2) + "auto ret = m_pWrapped->" + Meth.name + "(")
-			for Pi in range(0, PN):
-				com = ", "
-				if Pi == PN - 1:
-					com = ""
-				print(Ind(4) + Meth.params[Pi][1] + com)
-			print(Ind(2) + ");")
-			if Meth.name in ["QueryInterface", "GetParent", "GetDevice",
-			"GetBuffer", "GetDecoderBuffer", "OpenSharedResource", "GetResource",
-			"GetCoreWindow", "OpenSharedResource1", "OpenSharedResourceByName",
-			"EnumAdapterByLuid", "EnumWarpAdapter", "OpenSharedFence", "CreateFence", "Map"]:
-				print(Ind(2) + "(void)*(int*)nullptr; // Wrap not implemented; Emit Seg Fault")
-			else:
+				if Meth.retTy == "void":
+					print(Ind(2) + "m_pWrapped->" + Meth.name + "(")
+				else:
+					print(Ind(2) + "auto ret = m_pWrapped->" + Meth.name + "(")
 				for Pi in range(0, PN):
-					if "**" in Meth.params[Pi][0]:
-						RawType = Meth.params[Pi][0].split(" ")[0]
-						if RawType == "struct":
-							RawType = Meth.params[Pi][0].split(" ")[1]
-						print(Ind(2) + "if (*" + Meth.params[Pi][1] + ")")
-						#print(Ind(4) + "*" + Meth.params[Pi][1] + " = new Wrapped" + RawType + "(*" + Meth.params[Pi][1] + ");")
-						print(Ind(4) + "*" + Meth.params[Pi][1] + " = getWrapper<" + RawType +
-						", Wrapped" + RawType + ">(*" + Meth.params[Pi][1] + ");")
-			if Meth.retTy != "void":
-				print(Ind(2) + "return ret;")
+					com = ", "
+					if Pi == PN - 1:
+						com = ""
+					if "*" in Meth.params[Pi][0]:
+						print(Ind(4) + "unwrap(" + Meth.params[Pi][1] + ")" + com)
+					else:
+						print(Ind(4) + Meth.params[Pi][1] + com)
+				print(Ind(2) + ");")
+				if Meth.name in ["QueryInterface", "GetParent", "GetDevice",
+				"GetBuffer", "GetDecoderBuffer", "OpenSharedResource", "GetResource",
+				"GetCoreWindow", "OpenSharedResource1", "OpenSharedResourceByName",
+				"EnumAdapterByLuid", "EnumWarpAdapter", "OpenSharedFence", "CreateFence", "Map"]:
+					print(Ind(2) + "assert(false && \"Wrap not implemented; Emit Seg Fault\");")
+				else:
+					for Pi in range(0, PN):
+						if "**" in Meth.params[Pi][0]:
+							RawType = Meth.params[Pi][0].split(" ")[0]
+							if RawType == "struct":
+								RawType = Meth.params[Pi][0].split(" ")[1]
+							print(Ind(2) + "if (*" + Meth.params[Pi][1] + ")")
+							#print(Ind(4) + "*" + Meth.params[Pi][1] + " = new Wrapped" + RawType + "(*" + Meth.params[Pi][1] + ");")
+							print(Ind(4) + "*" + Meth.params[Pi][1] + " = getWrapper<" + RawType +
+							", Wrapped" + RawType + ">(*" + Meth.params[Pi][1] + ");")
+				if Meth.retTy != "void":
+					print(Ind(2) + "return ret;")
 			print(Ind(0) + "}")
 	
+def genQueryImpl(name, ctx):
+	print("""template<typename T> HRESULT """ + name + """Impl(
+  T *pObj,
+  const IID & riid, 
+  void ** ppvObject) {""")
+	print(Ind(2) + "HRESULT hr = S_OK;")
+	for TyName, Ty in ctx.apiTypes.items():
+		if TyName == "ID3DInclude":
+			continue
+		print(Ind(2) + "if(riid == __uuidof(" + Ty.name + ")) {")
+		print(Ind(4) + "hr = pObj->" + name + "(riid, ppvObject);")
+		print(Ind(4) + "if(SUCCEEDED(hr)) {")
+		print(Ind(6) + Ty.name + " *real = (" + Ty.name + " *)(*ppvObject);")
+		print(Ind(6) + "*ppvObject = getWrapper<" + Ty.name +", Wrapped" + Ty.name + ">(real);")
+		print(Ind(6) + "return S_OK;")
+		print(Ind(4) + "} else {")
+		print(Ind(6) + "*ppvObject = NULL;")
+		print(Ind(6) + "return hr;")
+		print(Ind(4) + "}")
+		print(Ind(2) + "}")
+	print(Ind(2) + "{")
+	print(Ind(4) + "out() << \"[" + name + "/WARNING] Unknown riid:\" << riid << \"\\n\";")
+	print(Ind(4) + "return pObj->" + name + "(riid, ppvObject);")
+	#print(Ind(4) + "assert(false && \"Wrap not implemented; Emit Seg Fault\");")
+	print(Ind(2) + "}")
+	print(Ind(2) + "return S_OK;")
+	print(Ind(0) + "}")
 
 def genWrappers(ctx):
 	print("""#include <d3d11.h>
@@ -67,27 +102,84 @@ def genWrappers(ctx):
 #include <d3d11_4.h>
 #include <d3dcompiler.h>
 #include <unordered_map>
-#include <iostream>
-static std::unordered_map<void*, void*> &getWrapTable()
+#include <fstream>
+#include <assert.h>
+static std::ofstream &out()
 {
-  static std::unordered_map<void*, void*> table;
+  static std::ofstream file("log");
+  file.setf(std::ios::unitbuf);
+  return file;
+}
+static std::unordered_map<size_t, size_t> &getWrapTable()
+{
+  static std::unordered_map<size_t, size_t> table;
+  return table;
+}
+static std::unordered_map<size_t, size_t> &getUnwrapTable()
+{
+  static std::unordered_map<size_t, size_t> table;
   return table;
 }
 template<typename T, typename WT>
-WT *getWrapper(T *t)
+T *getWrapper(T *t)
 {
   auto &wt = getWrapTable();
-  auto fd = wt.find(t);
+  auto fd = wt.find(reinterpret_cast<size_t>((void*)t));
   if (fd == wt.end()) {
     auto *wrap = new WT(t);
-    wt.emplace(t, wrap);
-    return static_cast<WT*>(wrap);
+    auto &uwt = getUnwrapTable();
+    uwt.emplace(reinterpret_cast<size_t>((void*)wrap), reinterpret_cast<size_t>((void*)t));
+    wt.emplace(reinterpret_cast<size_t>((void*)t), reinterpret_cast<size_t>((void*)wrap));
+    return reinterpret_cast<T*>(wrap);
   }
   else
   {
-    return static_cast<WT*>((*fd).second);
+    return reinterpret_cast<T*>((*fd).second);
   }
-}""")
+}
+template<typename T>
+T *unwrap(T *t)
+{
+  auto &uwt = getUnwrapTable();
+  auto fd = uwt.find(reinterpret_cast<size_t>((void*)t));
+  if (fd == uwt.end()) {
+    return t;
+  }
+  else
+  {
+    return reinterpret_cast<T*>((*fd).second);
+  }
+}
+std::ostream& operator<<(std::ostream& os, REFGUID guid) {
+
+  os << std::uppercase;
+  os.width(8);
+  os << std::hex << guid.Data1 << '-';
+
+  os.width(4);
+  os << std::hex << guid.Data2 << '-';
+
+  os.width(4);
+  os << std::hex << guid.Data3 << '-';
+
+  os.width(2);
+  os << std::hex
+    << static_cast<short>(guid.Data4[0])
+    << static_cast<short>(guid.Data4[1])
+    << '-'
+    << static_cast<short>(guid.Data4[2])
+    << static_cast<short>(guid.Data4[3])
+    << static_cast<short>(guid.Data4[4])
+    << static_cast<short>(guid.Data4[5])
+    << static_cast<short>(guid.Data4[6])
+    << static_cast<short>(guid.Data4[7]);
+  os << std::nouppercase;
+  return os;
+}
+""")
+	genQueryImpl("QueryInterface", ctx)
+	genQueryImpl("GetParent", ctx)
+
 	for TyName, Ty in ctx.apiTypes.items():
 		print("#if 0")
 		Ty.dump(ctx)
@@ -158,7 +250,7 @@ WT *getWrapper(T *t)
 						print(Ind(2) + "if (*" + FTy.params[Pi][1] + ")")
 						print(Ind(4) + "*" + FTy.params[Pi][1] + " = getWrapper<" + RawType +
 						", Wrapped" + RawType + ">(*" + FTy.params[Pi][1] + ");")
-			print(Ind(2) + "std::cout << \"" + FTy.name + "\\n\";")
+			print(Ind(2) + "out() << \"" + FTy.name + "\\n\";")
 			if FTy.retTy != "void":
 				print(Ind(2) + "return ret;")
 			print(Ind(0) + "}")

@@ -1664,6 +1664,7 @@ public:
       print = !pFD->getDeclContext()->isRecord() && (
         pFD->getNameAsString().find("D3D") == 0
         || pFD->getNameAsString().find("ID3D") == 0
+        || pFD->getNameAsString().find("DXGI") == 0
         || pFD->getNameAsString().find("IDXGI") == 0);
       print = print && !(0
         || pFD->getNameAsString().find("ID3D10") == 0
@@ -1728,10 +1729,16 @@ public:
           if (FunctionDecl *FD = dyn_cast<FunctionDecl>(*D)) {
             if (FD->getNameAsString().find("operator") != std::string::npos
               || FD->getNameAsString().find("~") != std::string::npos
-              || FD->getNameAsString().find("GetMessageA") != std::string::npos) {
+              //|| FD->getNameAsString().find("GetMessageA") != std::string::npos
+              ) {
               continue;
             }
-            g_ss << "FUNC_BEGIN(ctx, \"" << FD->getNameAsString() << "\")\n";
+            g_ss << "FUNC_BEGIN(ctx, \"" <<
+              (FD->getNameAsString().find("GetMessageA") != std::string::npos
+                ? "GetMessageW"
+                : FD->getNameAsString()
+                )
+              << "\")\n";
             std::string stmt;
             llvm::raw_string_ostream stream(stmt);
             FD->getReturnType().print(stream, PrintingPolicy(LangOptions()));
