@@ -11,7 +11,9 @@
   */
 
 #define NOMINMAX
-//#define __STDC_WANT_LIB_EXT1__ 1
+
+  
+  //#define __STDC_WANT_LIB_EXT1__ 1
 //#define _NO_CRT_STDIO_INLINE 1
 #include <tchar.h>
 #include <winsock2.h>
@@ -34,6 +36,41 @@
 
 #include <atomic>
 #include <mutex>
+
+
+#include <d3d11.h>
+#include <d3d11_1.h>
+#include <d3d11_2.h>
+#include <d3d11_3.h>
+#include <d3d11_4.h>
+
+extern HRESULT WrappedD3D11CreateDevice(
+  IDXGIAdapter * pAdapter,
+  D3D_DRIVER_TYPE DriverType,
+  HMODULE Software,
+  UINT Flags,
+  const D3D_FEATURE_LEVEL * pFeatureLevels,
+  UINT FeatureLevels,
+  UINT SDKVersion,
+  ID3D11Device ** ppDevice,
+  D3D_FEATURE_LEVEL * pFeatureLevel,
+  ID3D11DeviceContext ** ppImmediateContext
+);
+extern HRESULT WrappedD3D11CreateDeviceAndSwapChain(
+  IDXGIAdapter * pAdapter,
+  D3D_DRIVER_TYPE DriverType,
+  HMODULE Software,
+  UINT Flags,
+  const D3D_FEATURE_LEVEL * pFeatureLevels,
+  UINT FeatureLevels,
+  UINT SDKVersion,
+  const DXGI_SWAP_CHAIN_DESC * pSwapChainDesc,
+  IDXGISwapChain ** ppSwapChain,
+  ID3D11Device ** ppDevice,
+  D3D_FEATURE_LEVEL * pFeatureLevel,
+  ID3D11DeviceContext ** ppImmediateContext
+);
+
 
 static int VERBOSITY = 0;
 #define NOOP 0
@@ -134,6 +171,7 @@ private:
   static void EndHookRegistration();
 };
 
+
 // defines the interface that a library hooking class will implement.
 struct LibraryHook
 {
@@ -143,6 +181,18 @@ struct LibraryHook
 private:
   friend class LibraryHooks;
 };
+
+#if _WIN64
+
+#define BIT_SPECIFIC_DLL(dll32, dll64) dll64
+
+#else
+
+#define BIT_SPECIFIC_DLL(dll32, dll64) dll32
+
+#endif
+
+
 
 template <typename FuncType>
 class HookedFunction
@@ -161,6 +211,36 @@ public:
 private:
   void *orig_funcptr;
 };
+
+class D3D11Hook : LibraryHook
+{
+public:
+  D3D11Hook() {}
+  void RegisterHooks()
+  {
+
+    // also require d3dcompiler_??.dll
+    /*if (GetD3DCompiler() == NULL)
+    {
+    RDCERR("Failed to load d3dcompiler_??.dll - not inserting D3D11 hooks.");
+    return;
+    }*/
+
+    LibraryHooks::RegisterLibraryHook("d3d11.dll", NULL);
+
+    CreateDevice.Register("d3d11.dll", "D3D11CreateDevice", WrappedD3D11CreateDevice);
+    CreateDeviceAndSwapChain.Register("d3d11.dll", "D3D11CreateDeviceAndSwapChain",
+      WrappedD3D11CreateDeviceAndSwapChain);
+
+  }
+
+private:
+  HookedFunction<PFN_D3D11_CREATE_DEVICE_AND_SWAP_CHAIN> CreateDeviceAndSwapChain;
+  HookedFunction<PFN_D3D11_CREATE_DEVICE> CreateDevice;
+  static D3D11Hook d3d11hooks;
+};
+
+D3D11Hook D3D11Hook::d3d11hooks;
 
 static std::vector<LibraryHook *> &LibList()
 {

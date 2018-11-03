@@ -18,7 +18,7 @@ include_directories(${LLVM_INCLUDE_DIRS})
 link_directories(${LLVM_LIBRARY_DIRS})
 add_definitions(${LLVM_DEFINITIONS})
 
-add_executable(apiparse main.cpp)
+add_executable(apiparse main.cpp apiutil.py d3d11wrapgen.py)
 add_executable(example example.cpp)
 
 target_link_libraries(apiparse PRIVATE
@@ -66,7 +66,8 @@ endif()
 install(TARGETS apiparse DESTINATION bin)
 install(TARGETS example DESTINATION bin)
 configure_file(include_d3d11.cpp ${CMAKE_CURRENT_BINARY_DIR}/include_d3d11.cpp COPYONLY)
-
+configure_file(apiutil.py ${CMAKE_CURRENT_BINARY_DIR}/apiutil.py COPYONLY)
+configure_file(d3d11wrapgen.py ${CMAKE_CURRENT_BINARY_DIR}/d3d11wrapgen.py COPYONLY)
 ##################################
 ##################################
 ##################################
@@ -75,6 +76,7 @@ set (CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 
 add_library (injectee_iat MODULE
     injectee_iat.cpp
+	${CMAKE_CURRENT_BINARY_DIR}/d3d11wrapper.cpp
 )
 # set_target_properties(injectee_iat PROPERTIES LINK_FLAGS "${LINK_FLAGS} /SUBSYSTEM:WINDOWS /ENTRY:DllMainStartup")
 # target_compile_options(injectee_iat PRIVATE "/clr /EHs-")
@@ -86,6 +88,10 @@ add_library (injectee_iat MODULE
 
 
 install (TARGETS injectee_iat LIBRARY DESTINATION bin)
+target_link_libraries(injectee_iat PRIVATE
+    d3d11
+	d3dcompiler
+	dxgi)
 string (REGEX REPLACE "/GR *" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /GR-")
 
@@ -103,17 +109,27 @@ add_definitions (-DNOMINMAX)
 # Adjust warnings
 add_definitions (-D_CRT_SECURE_NO_DEPRECATE -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_WARNINGS)
 add_definitions (-D_SCL_SECURE_NO_DEPRECATE -D_SCL_SECURE_NO_WARNINGS)
-foreach (flag_var
-        CMAKE_C_FLAGS CMAKE_C_FLAGS_DEBUG CMAKE_C_FLAGS_RELEASE CMAKE_C_FLAGS_MINSIZEREL CMAKE_C_FLAGS_RELWITHDEBINFO
-        CMAKE_CXX_FLAGS CMAKE_CXX_FLAGS_DEBUG CMAKE_CXX_FLAGS_RELEASE CMAKE_CXX_FLAGS_MINSIZEREL CMAKE_CXX_FLAGS_RELWITHDEBINFO
-    )
-        if (${flag_var} MATCHES "/MTd")
-            string (REGEX REPLACE "/MTd" "/MD" ${flag_var} "${${flag_var}}")
-        endif ()
-		if (${flag_var} MATCHES "/MDd")
-            string (REGEX REPLACE "/MDd" "/MD" ${flag_var} "${${flag_var}}")
-        endif ()
-    endforeach (flag_var)
+# foreach (flag_var
+        # CMAKE_C_FLAGS_DEBUG CMAKE_CXX_FLAGS_DEBUG
+    # )
+        # if (${flag_var} MATCHES "/MTd")
+            # string (REGEX REPLACE "/MTd" "/MDd" ${flag_var} "${${flag_var}}")
+        # endif ()
+		# if (${flag_var} MATCHES "/MD")
+            # string (REGEX REPLACE "/MD" "/MDd" ${flag_var} "${${flag_var}}")
+        # endif ()
+# endforeach (flag_var)
+# foreach (flag_var
+        # CMAKE_C_FLAGS_RELEASE
+        # CMAKE_CXX_FLAGS_RELEASE
+    # )
+        # if (${flag_var} MATCHES "/MTd")
+            # string (REGEX REPLACE "/MTd" "/MD" ${flag_var} "${${flag_var}}")
+        # endif ()
+		# if (${flag_var} MATCHES "/MDd")
+            # string (REGEX REPLACE "/MDd" "/MD" ${flag_var} "${${flag_var}}")
+        # endif ()
+# endforeach (flag_var)
 # target_link_libraries (injectee_iat
     # #vcruntime
 	# libucrt
