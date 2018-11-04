@@ -14,7 +14,13 @@ def dumpMethod(ctx, obj, Meth, declOnly):
 		else:
 			print(Ind(0) + Meth.retTy + " __stdcall Wrapped" + obj + "::" + Meth.name + "() {")
 			print(Ind(2) + "out() << \"" + obj + "(\" << m_pWrapped << \")::" + Meth.name + "\\n\";")
-			print(Ind(2) + "return m_pWrapped->" + Meth.name + "();")
+			if Meth.retTy != "void":
+				print(Ind(2) + "auto ret = m_pWrapped->" + Meth.name + "();")
+				print(Ind(2) + "out() << \"\\treturned \" << ret << \"\\n\";")
+				print(Ind(2) + "return ret;")
+			else:
+				print(Ind(2) + "return m_pWrapped->" + Meth.name + "();")
+
 			print(Ind(0) + "}")
 	else:
 		if declOnly:
@@ -44,7 +50,7 @@ def dumpMethod(ctx, obj, Meth, declOnly):
 			for param in Meth.params:
 				if countPtrs(param.type) == 2 and param.annot in ["IN_ARRAY", "INOUT_ARRAY"]:
 					print(Ind(2) + param.type.split("*")[0].replace("const", "") + " *tmp_" + param.name + "[32];")
-					print(Ind(2) + "for (int i = 0; i < " + param.number + "; i++) tmp_" + param.name + "[i] = unwrap(" + param.name + "[i]);")
+					print(Ind(2) + "for (uint32_t i = 0; i < " + param.number + "; i++) tmp_" + param.name + "[i] = unwrap(" + param.name + "[i]);")
 					UnwrapTable[param.name] = "tmp_" + param.name + ""
 				elif countPtrs(param.type) == 1 and param.annot in ["IN", "INOUT"]:
 					UnwrapTable[param.name] = "unwrap(" + param.name + ")"
@@ -62,6 +68,8 @@ def dumpMethod(ctx, obj, Meth, declOnly):
 					com = ""
 				print(Ind(4) + UnwrapTable[Meth.params[Pi].name] + com)
 			print(Ind(2) + ");")
+			if Meth.retTy != "void":
+				print(Ind(2) + "out() << \"\\treturned \" << ret << \"\\n\";")
 			####### POST-PROCESS
 			if Meth.name in ["GetDevice"]:
 				print(Ind(2) + "if(*" + Meth.params[-1].name + ")")
@@ -89,27 +97,30 @@ def dumpMethod(ctx, obj, Meth, declOnly):
 			elif Meth.name in ["GetDecoderBuffer"]:
 				print(Ind(2) + "assert(false && \"Wrap not implemented; Emit Seg Fault\");")
 			else:
+				rescheck = "true"
+				if Meth.retTy == "HRESULT":
+					rescheck = "!ret"
 				for param in Meth.params:
 					if countPtrs(param.type) == 2 and param.annot in ["INOUT_ARRAY"]:
 						RawType = param.type.split(" ")[0]
 						if RawType == "struct":
 							RawType = param.type.split(" ")[1]
 						if RawType in ctx.apiTypes.keys():
-							print(Ind(2) + "for (int i = 0; i < " + param.number + "; i++) if (tmp_" + param.name + "[i]) " + param.name + "[i] = getWrapper<" + RawType +
+							print(Ind(2) + "for (uint32_t i = 0; i < " + param.number + "; i++) if ("+rescheck+" && tmp_" + param.name + "[i]) " + param.name + "[i] = getWrapper<" + RawType +
 							", Wrapped" + RawType + ">(tmp_" + param.name + "[i]);")
 					if countPtrs(param.type) == 2 and param.annot in ["OUT_ARRAY"]:
 						RawType = param.type.split(" ")[0]
 						if RawType == "struct":
 							RawType = param.type.split(" ")[1]
 						if RawType in ctx.apiTypes.keys():
-							print(Ind(2) + "for (int i = 0; i < " + param.number + "; i++) if (" + param.name + " && " + param.name + "[i]) " + param.name + "[i] = getWrapper<" + RawType +
+							print(Ind(2) + "for (uint32_t i = 0; i < " + param.number + "; i++) if ("+rescheck+" && " + param.name + " && " + param.name + "[i]) " + param.name + "[i] = getWrapper<" + RawType +
 							", Wrapped" + RawType + ">(" + param.name + "[i]);")
-					elif countPtrs(param.type) == 1 and param.annot in ["OUT", "INOUT"]:
+					elif countPtrs(param.type) == 2 and param.annot in ["OUT", "INOUT"]:
 						RawType = param.type.split(" ")[0]
 						if RawType == "struct":
 							RawType = param.type.split(" ")[1]
 						if RawType in ctx.apiTypes.keys():
-							print(Ind(4) + "if (" + param.name + " && *" + param.name  + " ) *" + param.name + " = getWrapper<" + RawType + ", Wrapped" + RawType + ">(*" + param.name + ");")
+							print(Ind(4) + "if ("+rescheck+" && " + param.name + " && *" + param.name  + " ) *" + param.name + " = getWrapper<" + RawType + ", Wrapped" + RawType + ">(*" + param.name + ");")
 					else:
 						pass
 			""""
@@ -247,8 +258,9 @@ std::ostream& operator<<(std::ostream& os, REFGUID guid) {
 		print("public:")
 		print(Ind(2) + "Wrapped" + TyName + "(" + TyName + " *pWrapped) : m_pWrapped(pWrapped) {")
 		print(Ind(4) + "out() << \"[CREATE] " + TyName + "(\" << m_pWrapped << \")\\n\";")
-		if Ty.hasBase(ctx, "IUnknown"):
-			print(Ind(4) + "for (int i = 0; i < 10; i++) m_pWrapped->AddRef();")
+		print(Ind(4) + "assert(m_pWrapped);")
+		#if Ty.hasBase(ctx, "IUnknown"):
+		#	print(Ind(4) + "for (int i = 0; i < 10; i++) m_pWrapped->AddRef();")
 		print(Ind(2) + "}")
 
 		MethSet = {}
@@ -292,6 +304,22 @@ std::ostream& operator<<(std::ostream& os, REFGUID guid) {
 				print(Ind(2) + FTy.params[Pi].type + " " + FTy.params[Pi].name + com)
 			print(Ind(0) + ") {")
 			print(Ind(2) + "out() << \"" + FTy.name + "\\n\";")
+			######
+			NumWrapped = ""
+			#if Meth.name in ["QueryInterface"]:
+				#NumWrapped = 
+			# for scalar, ptr and array types there is different unwrap code
+			UnwrapTable = {}
+			for param in FTy.params:
+				if countPtrs(param.type) == 2 and param.annot in ["IN_ARRAY", "INOUT_ARRAY"]:
+					print(Ind(2) + param.type.split("*")[0].replace("const", "") + " *tmp_" + param.name + "[32];")
+					print(Ind(2) + "for (uint32_t i = 0; i < " + param.number + "; i++) tmp_" + param.name + "[i] = unwrap(" + param.name + "[i]);")
+					UnwrapTable[param.name] = "tmp_" + param.name + ""
+				elif countPtrs(param.type) == 1 and param.annot in ["IN", "INOUT"]:
+					UnwrapTable[param.name] = "unwrap(" + param.name + ")"
+				else:
+					UnwrapTable[param.name] = param.name
+			########
 			if FTy.retTy == "void":
 				print(Ind(2) + "" + FTy.name + "(")
 			else:
@@ -300,13 +328,13 @@ std::ostream& operator<<(std::ostream& os, REFGUID guid) {
 				com = ", "
 				if Pi == PN - 1:
 					com = ""
-				print(Ind(4) + FTy.params[Pi].name + com)
+				print(Ind(4) + UnwrapTable[FTy.params[Pi].name] + com)
 			print(Ind(2) + ");")
 			if FTy.name in ["D3DReflect"]:
 				print(Ind(2) + "assert(false && \"Wrap not implemented; Emit Seg Fault\");")
 			elif FTy.name in ["DXGIGetDebugInterface", "DXGIGetDebugInterface1",
 			"CreateDXGIFactory2", "CreateDXGIFactory", "CreateDXGIFactory1"]:
-				print(Ind(2) + "if(ret)")
+				print(Ind(2) + "if(!ret)")
 				print(Ind(4) + "HandleWrap(riid, (void**)" + FTy.params[-1].name + ");")
 			else:
 				for Pi in range(0, PN):
@@ -314,7 +342,7 @@ std::ostream& operator<<(std::ostream& os, REFGUID guid) {
 						RawType = FTy.params[Pi].type.split(" ")[0]
 						if RawType == "struct":
 							RawType = FTy.params[Pi].type.split(" ")[1]
-						print(Ind(2) + "if (*" + FTy.params[Pi].name + ")")
+						print(Ind(2) + "if (!ret && " + FTy.params[Pi].name + " && *" + FTy.params[Pi].name + ")")
 						print(Ind(4) + "*" + FTy.params[Pi].name + " = getWrapper<" + RawType +
 						", Wrapped" + RawType + ">(*" + FTy.params[Pi].name + ");")
 			
