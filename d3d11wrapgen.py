@@ -56,7 +56,8 @@ def dumpMethod(ctx, Ty, base, Meth, declOnly):
 					print(Ind(2) + "for (uint32_t i = 0; i < " + param.number + "; i++) tmp_" + param.name + "[i] = unwrap(" + param.name + "[i]);")
 					UnwrapTable[param.name] = "tmp_" + param.name + ""
 				elif countPtrs(param.type) == 1 and param.annot in ["IN", "INOUT"]:
-					UnwrapTable[param.name] = "unwrap(" + param.name + ")"
+					print(Ind(2) + "auto unwrapped_" + param.name + " = unwrap("+ param.name + ");")
+					UnwrapTable[param.name] = "unwrapped_" + param.name + ""
 				else:
 					UnwrapTable[param.name] = param.name
 
@@ -190,12 +191,19 @@ def genWrappers(ctx):
 #include <unordered_map>
 #include <fstream>
 #include <assert.h>
+#include <mutex>
 static std::ofstream &out()
 {
   static std::ofstream file("log");
   file.setf(std::ios::unitbuf);
   return file;
 }
+std::mutex &getGlobalLock()
+{
+  static std::mutex m;
+  return m;
+}
+#define GLOBAL_LOCK std::lock_guard<std::mutex> GLOBAL_LOCK_VAR(getGlobalLock())
 static std::unordered_map<size_t, size_t> &getWrapTable()
 {
   static std::unordered_map<size_t, size_t> table;
@@ -209,13 +217,11 @@ static std::unordered_map<size_t, size_t> &getUnwrapTable()
 template<typename T, typename WT>
 T *getWrapper(T *t)
 {
+  GLOBAL_LOCK;
   auto &wt = getWrapTable();
   auto fd = wt.find(reinterpret_cast<size_t>((void*)t));
   if (fd == wt.end()) {
     auto *wrap = new WT(t);
-    auto &uwt = getUnwrapTable();
-    uwt.emplace(reinterpret_cast<size_t>((void*)wrap), reinterpret_cast<size_t>((void*)t));
-    wt.emplace(reinterpret_cast<size_t>((void*)t), reinterpret_cast<size_t>((void*)wrap));
     return reinterpret_cast<T*>(wrap);
   }
   else
@@ -226,6 +232,7 @@ T *getWrapper(T *t)
 template<typename T>
 T *unwrap(T *t)
 {
+  GLOBAL_LOCK;
   auto &uwt = getUnwrapTable();
   auto fd = uwt.find(reinterpret_cast<size_t>((void*)t));
   if (fd == uwt.end()) {
@@ -296,11 +303,20 @@ std::ostream& operator<<(std::ostream& os, REFGUID guid) {
 		print(Ind(2) + "Wrapped" + TyName + "(T *pWrapped) {")
 		print(Ind(4) + "out() << \"[CREATE] " + TyName + "(\" << pWrapped << \")\\n\";")
 		print(Ind(4) + "assert(pWrapped);")
-		for base in wrappedTypes:
+		#print(Ind(4) + "GLOBAL_LOCK;")
+		print(Ind(4) + "auto &uwt = getUnwrapTable();")
+		print(Ind(4) + "auto &wt = getWrapTable();")
+		for base in reversed(wrappedTypes):
 			print(Ind(4) + "m_p" + base.name + " = nullptr;");
 			if Ty.hasBase(ctx, "IUnknown"):
 				print(Ind(4) + "pWrapped->QueryInterface(__uuidof(" + base.name + "), (void **)&m_p" + base.name + ");")
-				print(Ind(4) + "m_p" + base.name + "->Release();")
+				print(Ind(4) + "if (m_p" + base.name + ") {")
+				print(Ind(6) + "m_p" + base.name + "->Release();")
+				print(Ind(6) + "uwt[reinterpret_cast<size_t>((void*)this)] = reinterpret_cast<size_t>((void*)m_p" + base.name + ");")
+				print(Ind(6) + "wt[reinterpret_cast<size_t>((void*)m_p" + base.name + ")] = reinterpret_cast<size_t>((void*)this);")
+				print(Ind(6) + "out() << \"[MAP] \" << m_p" + base.name + " << \" -> \" << this << \"\\n\";")
+				print(Ind(4) + "}")
+
 			else:
 				print(Ind(4) + "m_p" + base.name + " = (" + base.name + "*)pWrapped;")
 		#if Ty.hasBase(ctx, "IUnknown"):

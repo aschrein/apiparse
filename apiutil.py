@@ -76,6 +76,8 @@ class APIParam:
 			self.annot = "OUT"
 		elif "_COM_Outptr_opt_" in annot:
 			self.annot = "OUT"
+		elif "_Outptr_" in annot:
+			self.annot = "OUT"
 		elif "_In_reads_bytes_opt_" in annot:
 			m = re.search(r'_In_reads_bytes_opt_\((.*)\)', annot)
 			self.number = m.group(1)
