@@ -107,6 +107,8 @@ class APIContext:
 		self.apiFuncs = {}
 		self.curType = None
 		self.curFunc = None
+		self.dumpSet = []
+		self.wrapTable = {}
 
 def CLASS_BEGIN(ctx, name):
 	assert(ctx.curType == None)

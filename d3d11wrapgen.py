@@ -6,20 +6,23 @@ def countPtrs(txt):
 		if char == "*":
 			result += 1
 	return result
-def dumpMethod(ctx, obj, Meth, declOnly):
+
+
+def dumpMethod(ctx, Ty, base, Meth, declOnly):
 	PN = len(Meth.params)
+	wrapName = "m_p" + base.name
 	if PN == 0:
 		if declOnly:
 			print(Ind(2) + Meth.retTy + " __stdcall " + Meth.name + "() override;")
 		else:
-			print(Ind(0) + Meth.retTy + " __stdcall Wrapped" + obj + "::" + Meth.name + "() {")
-			print(Ind(2) + "out() << \"" + obj + "(\" << m_pWrapped << \")::" + Meth.name + "\\n\";")
+			print(Ind(0) + Meth.retTy + " __stdcall Wrapped" + Ty.name + "::" + Meth.name + "() {")
+			print(Ind(2) + "out() << \"" + Ty.name + "(\" << " + wrapName + " << \")::" + Meth.name + "\\n\";")
 			if Meth.retTy != "void":
-				print(Ind(2) + "auto ret = m_pWrapped->" + Meth.name + "();")
+				print(Ind(2) + "auto ret = " + wrapName + "->" + Meth.name + "();")
 				print(Ind(2) + "out() << \"\\treturned \" << ret << \"\\n\";")
 				print(Ind(2) + "return ret;")
 			else:
-				print(Ind(2) + "return m_pWrapped->" + Meth.name + "();")
+				print(Ind(2) + "return " + wrapName + "->" + Meth.name + "();")
 
 			print(Ind(0) + "}")
 	else:
@@ -32,7 +35,7 @@ def dumpMethod(ctx, obj, Meth, declOnly):
 				print(Ind(4) + Meth.params[Pi].type + " " + Meth.params[Pi].name + com)
 			print(Ind(2) + ") override;")
 		else:
-			print(Ind(0) + Meth.retTy + " __stdcall Wrapped" + obj + "::" + Meth.name + "(")
+			print(Ind(0) + Meth.retTy + " __stdcall Wrapped" + Ty.name + "::" + Meth.name + "(")
 			for Pi in range(0, PN):
 				com = ", "
 				if Pi == PN - 1:
@@ -40,7 +43,7 @@ def dumpMethod(ctx, obj, Meth, declOnly):
 				print(Ind(2) + Meth.params[Pi].type + " " + Meth.params[Pi].name + com)
 			print(Ind(0) + ") {")
 			
-			print(Ind(2) + "out() << \"" + obj + "(\" << m_pWrapped << \")::" + Meth.name + "\\n\";")
+			print(Ind(2) + "out() << \"" + Ty.name + "(\" << " + wrapName + " << \")::" + Meth.name + "\\n\";")
 			####### PRE-PROCESS
 			NumWrapped = ""
 			#if Meth.name in ["QueryInterface"]:
@@ -59,9 +62,9 @@ def dumpMethod(ctx, obj, Meth, declOnly):
 
 			####### CALL
 			if Meth.retTy == "void":
-				print(Ind(2) + "m_pWrapped->" + Meth.name + "(")
+				print(Ind(2) + "" + wrapName + "->" + Meth.name + "(")
 			else:
-				print(Ind(2) + "auto ret = m_pWrapped->" + Meth.name + "(")
+				print(Ind(2) + "auto ret = " + wrapName + "->" + Meth.name + "(")
 			for Pi in range(0, PN):
 				com = ", "
 				if Pi == PN - 1:
@@ -86,9 +89,23 @@ def dumpMethod(ctx, obj, Meth, declOnly):
 			elif Meth.name in ["OpenSharedResourceByName", "OpenSharedResource1"]:
 				print(Ind(2) + "if(*" + Meth.params[-1].name + ")")
 				print(Ind(4) + "HandleWrap(returnedInterface, (void**)" + Meth.params[-1].name + ");")
-			elif Meth.name in ["QueryInterface", "GetParent",
+			elif Meth.name in ["GetParent",
 			"GetBuffer",
 			"EnumAdapterByLuid", "EnumWarpAdapter"]:
+				print(Ind(2) + "{")
+				print(Ind(4) + "if(!ret) {")
+				print(Ind(6) + "HandleWrap(riid, " + Meth.params[-1].name + ");")
+				print(Ind(4) + "}")
+				print(Ind(2) + "}")
+			elif Meth.name in ["QueryInterface"]:
+				wrappedTypes = [Ty] + Ty.getBases(ctx, [])
+				print(Ind(2) + "if(!ret) {")
+				for base in wrappedTypes:
+					print(Ind(4) + "if(riid == __uuidof(" + base.name + ")) {")
+					print(Ind(6) + "*" + Meth.params[-1].name + " = (" + base.name + "*)this;")
+					print(Ind(6) + "return ret;")
+					print(Ind(4) + "}")
+				print(Ind(2) + "}")
 				print(Ind(2) + "{")
 				print(Ind(4) + "if(!ret) {")
 				print(Ind(6) + "HandleWrap(riid, " + Meth.params[-1].name + ");")
@@ -107,20 +124,20 @@ def dumpMethod(ctx, obj, Meth, declOnly):
 							RawType = param.type.split(" ")[1]
 						if RawType in ctx.apiTypes.keys():
 							print(Ind(2) + "for (uint32_t i = 0; i < " + param.number + "; i++) if ("+rescheck+" && tmp_" + param.name + "[i]) " + param.name + "[i] = getWrapper<" + RawType +
-							", Wrapped" + RawType + ">(tmp_" + param.name + "[i]);")
+							", Wrapped" + ctx.wrapTable[RawType].name + ">(tmp_" + param.name + "[i]);")
 					if countPtrs(param.type) == 2 and param.annot in ["OUT_ARRAY"]:
 						RawType = param.type.split(" ")[0]
 						if RawType == "struct":
 							RawType = param.type.split(" ")[1]
 						if RawType in ctx.apiTypes.keys():
 							print(Ind(2) + "for (uint32_t i = 0; i < " + param.number + "; i++) if ("+rescheck+" && " + param.name + " && " + param.name + "[i]) " + param.name + "[i] = getWrapper<" + RawType +
-							", Wrapped" + RawType + ">(" + param.name + "[i]);")
+							", Wrapped" + ctx.wrapTable[RawType].name + ">(" + param.name + "[i]);")
 					elif countPtrs(param.type) == 2 and param.annot in ["OUT", "INOUT"]:
 						RawType = param.type.split(" ")[0]
 						if RawType == "struct":
 							RawType = param.type.split(" ")[1]
 						if RawType in ctx.apiTypes.keys():
-							print(Ind(4) + "if ("+rescheck+" && " + param.name + " && *" + param.name  + " ) *" + param.name + " = getWrapper<" + RawType + ", Wrapped" + RawType + ">(*" + param.name + ");")
+							print(Ind(4) + "if ("+rescheck+" && " + param.name + " && *" + param.name  + " ) *" + param.name + " = getWrapper<" + RawType + ", Wrapped" + ctx.wrapTable[RawType].name + ">(*" + param.name + ");")
 					else:
 						pass
 			""""
@@ -143,12 +160,12 @@ def genQueryImpl(ctx):
   const IID & riid, 
   T ** ppvObject) {""")
 	#print(Ind(2) + "HRESULT hr = S_OK;")
-	for TyName, Ty in ctx.apiTypes.items():
-		if TyName == "ID3DInclude":
+	for Ty in ctx.apiTypes.values():
+		if Ty.name == "ID3DInclude":
 			continue
 		print(Ind(2) + "if(riid == __uuidof(" + Ty.name + ")) {")
 		print(Ind(4) + "*ppvObject = (T*)getWrapper<" + Ty.name +
-						", Wrapped" + Ty.name + ">((" + Ty.name + "*)*ppvObject);")
+						", Wrapped" + ctx.wrapTable[Ty.name].name + ">((" + Ty.name + "*)*ppvObject);")
 		print(Ind(4) + "return;")
 		print(Ind(2) + "}")
 	print(Ind(2) + "{")
@@ -246,46 +263,69 @@ std::ostream& operator<<(std::ostream& os, REFGUID guid) {
   return os;
 }
 """)
-	genQueryImpl(ctx)
+	
+
+	derivFlags = set()
+	for TyName, Ty in ctx.apiTypes.items():
+		for base in Ty.getBases(ctx, []):
+			derivFlags.add(base.name)
 
 	for TyName, Ty in ctx.apiTypes.items():
+		if not TyName in derivFlags:
+			for base in Ty.getBases(ctx, []):
+				ctx.wrapTable[base.name] = Ty
+			ctx.dumpSet.append(Ty)
+			if Ty.name == "ID3D10Blob":
+				ctx.wrapTable["ID3DBlob"] = Ty
+			ctx.wrapTable[Ty.name] = Ty
+
+	genQueryImpl(ctx)
+
+	for Ty in ctx.dumpSet:
+		TyName = Ty.name
 		print("#if 0")
 		Ty.dump(ctx)
 		print("#endif")
 		print("class Wrapped" + TyName + " : public " + TyName + " {")
 		print("private:")
-		print(Ind(2) + TyName + " *m_pWrapped;")
+		wrappedTypes = [Ty] + Ty.getBases(ctx, [])
+		for base in wrappedTypes:
+			print(Ind(2) + base.name + " *m_p" + base.name + ";")
 		print("public:")
-		print(Ind(2) + "Wrapped" + TyName + "(" + TyName + " *pWrapped) : m_pWrapped(pWrapped) {")
-		print(Ind(4) + "out() << \"[CREATE] " + TyName + "(\" << m_pWrapped << \")\\n\";")
-		print(Ind(4) + "assert(m_pWrapped);")
+		print(Ind(2) + "template<typename T>")
+		print(Ind(2) + "Wrapped" + TyName + "(T *pWrapped) {")
+		print(Ind(4) + "out() << \"[CREATE] " + TyName + "(\" << pWrapped << \")\\n\";")
+		print(Ind(4) + "assert(pWrapped);")
+		for base in wrappedTypes:
+			print(Ind(4) + "m_p" + base.name + " = nullptr;");
+			if Ty.hasBase(ctx, "IUnknown"):
+				print(Ind(4) + "pWrapped->QueryInterface(__uuidof(" + base.name + "), (void **)&m_p" + base.name + ");")
+			else:
+				print(Ind(4) + "m_p" + base.name + " = (" + base.name + "*)pWrapped;")
 		#if Ty.hasBase(ctx, "IUnknown"):
-		#	print(Ind(4) + "for (int i = 0; i < 10; i++) m_pWrapped->AddRef();")
+		#	print(Ind(4) + "for (int i = 0; i < 10; i++) " + wrapName + "->AddRef();")
 		print(Ind(2) + "}")
 
 		MethSet = {}
 		for Meth in Ty.methods:
-			MethSet[Meth.name] = Meth
-			#dumpMethod(TyName, Meth, True)
+			MethSet[Meth.name] = (Ty, Meth)
 		for Base in Ty.getBases(ctx, []):
 			for Meth in Base.methods:
-				MethSet[Meth.name] = Meth
-				#print("//inherited from " + Base.name)
-				#dumpMethod(TyName, Meth, True)
+				MethSet[Meth.name] = (Base, Meth)
 		for Name, Meth in MethSet.items():
-			dumpMethod(ctx, TyName, Meth, True)
+			dumpMethod(ctx, Ty, Meth[0], Meth[1], True)
 		print("};")
 	print("typedef WrappedID3D10Blob WrappedID3DBlob;")
-	for TyName, Ty in ctx.apiTypes.items():
+	for Ty in ctx.dumpSet:
 
 		MethSet = {}
 		for Meth in Ty.methods:
-			MethSet[Meth.name] = Meth
+			MethSet[Meth.name] = (Ty, Meth)
 		for Base in Ty.getBases(ctx, []):
 			for Meth in Base.methods:
-				MethSet[Meth.name] = Meth
+				MethSet[Meth.name] = (Base, Meth)
 		for Name, Meth in MethSet.items():
-			dumpMethod(ctx, TyName, Meth, False)	
+			dumpMethod(ctx, Ty, Meth[0], Meth[1], False)	
 		
 		
 	for FName, FTy in ctx.apiFuncs.items():
@@ -344,7 +384,7 @@ std::ostream& operator<<(std::ostream& os, REFGUID guid) {
 							RawType = FTy.params[Pi].type.split(" ")[1]
 						print(Ind(2) + "if (!ret && " + FTy.params[Pi].name + " && *" + FTy.params[Pi].name + ")")
 						print(Ind(4) + "*" + FTy.params[Pi].name + " = getWrapper<" + RawType +
-						", Wrapped" + RawType + ">(*" + FTy.params[Pi].name + ");")
+						", Wrapped" + ctx.wrapTable[RawType].name + ">(*" + FTy.params[Pi].name + ");")
 			
 			if FTy.retTy != "void":
 				print(Ind(2) + "return ret;")
