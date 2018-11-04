@@ -32,6 +32,75 @@ class APIFunc:
 		self.retTy = None
 		self.params = []
 
+import re
+
+class APIParam:
+	def __init__(self, annot, type, name):
+		self.name = name
+		self.annot = "IN"
+		self.number = "NOT_SET"
+		self.type = type
+		if "_Inout_" in annot:
+			self.annot = "INOUT"
+		elif "_Out_writes_all_opt_" in annot:
+			m = re.search(r'_Out_writes_all_opt_\((.*)\)', annot)
+			self.number = m.group(1)
+			self.annot = "OUT_ARRAY"
+		elif "_Out_writes_bytes_opt_" in annot:
+			m = re.search(r'_Out_writes_bytes_opt_\((.*)\)', annot)
+			self.number = m.group(1)
+			self.annot = "OUT_ARRAY"
+		elif "_Out_writes_bytes_" in annot:
+			m = re.search(r'_Out_writes_bytes_\((.*)\)', annot)
+			self.number = m.group(1)
+			self.annot = "OUT_ARRAY"
+		elif "_Out_writes_opt_" in annot:
+			m = re.search(r'_Out_writes_opt_\((.*)\)', annot)
+			self.number = m.group(1)
+			self.annot = "OUT_ARRAY"
+		elif "_Out_writes_all_" in annot:
+			m = re.search(r'_Out_writes_all_\((.*)\)', annot)
+			self.number = m.group(1)
+			self.annot = "OUT_ARRAY"
+		elif "_Out_writes_" in annot:
+			m = re.search(r'_Out_writes_\((.*)\)', annot)
+			self.number = m.group(1)
+			self.annot = "OUT_ARRAY"
+		elif "_Outptr_result_bytebuffer_" in annot:
+			m = re.search(r'_Outptr_result_bytebuffer_\((.*)\)', annot)
+			self.number = m.group(1)
+			self.annot = "OUT_ARRAY"
+		elif "_COM_Outptr_" in annot:
+			self.annot = "OUT"
+		elif "[iid_is][out]" in annot:
+			self.annot = "OUT"
+		elif "_COM_Outptr_opt_" in annot:
+			self.annot = "OUT"
+		elif "_In_reads_bytes_opt_" in annot:
+			m = re.search(r'_In_reads_bytes_opt_\((.*)\)', annot)
+			self.number = m.group(1)
+			self.annot = "IN_ARRAY"
+		elif "_In_reads_bytes_" in annot:
+			m = re.search(r'_In_reads_bytes_\((.*)\)', annot)
+			self.number = m.group(1)
+			self.annot = "IN_ARRAY"
+		elif "_In_reads_opt_" in annot:
+			m = re.search(r'_In_reads_opt_\((.*)\)', annot)
+			self.number = m.group(1)
+			self.annot = "IN_ARRAY"
+		elif "_In_reads_" in annot:
+			m = re.search(r'_In_reads_\((.*)\)', annot)
+			self.number = m.group(1)
+			self.annot = "IN_ARRAY"
+		elif "_Inout_opt_bytecount_" in annot:
+			m = re.search(r'_Inout_opt_bytecount_\((.*)\)', annot)
+			self.number = m.group(1)
+			self.annot = "INOUT_ARRAY"
+		elif "_Outptr_opt_result_maybenull_" in annot:
+			self.annot = "OUT"
+		elif "_Out_" in annot:
+			self.annot = "OUT"
+
 class APIContext:
 	def __init__(self):
 		self.apiTypes = {}
@@ -60,9 +129,9 @@ def RETURN_TYPE(ctx, name):
 	assert(ctx.curFunc != None)
 	ctx.curFunc.retTy = name
 
-def PARAM(ctx, type, name):
+def PARAM(ctx, annot, type, name):
 	assert(ctx.curFunc != None)
-	ctx.curFunc.params.append((type, name))
+	ctx.curFunc.params.append(APIParam(annot, type, name))
 
 def FUNC_END(ctx, name):
 	assert(ctx.curFunc != None)

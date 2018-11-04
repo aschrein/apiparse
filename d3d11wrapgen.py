@@ -10,28 +10,28 @@ def dumpMethod(obj, Meth, declOnly):
 	PN = len(Meth.params)
 	if PN == 0:
 		if declOnly:
-			print(Ind(2) + Meth.retTy + " " + Meth.name + "() override;")
+			print(Ind(2) + Meth.retTy + " __stdcall " + Meth.name + "() override;")
 		else:
-			print(Ind(0) + Meth.retTy + " Wrapped" + obj + "::" + Meth.name + "() {")
+			print(Ind(0) + Meth.retTy + " __stdcall Wrapped" + obj + "::" + Meth.name + "() {")
 			print(Ind(2) + "out() << \"" + obj + "(\" << m_pWrapped << \")::" + Meth.name + "\\n\";")
 			print(Ind(2) + "return m_pWrapped->" + Meth.name + "();")
 			print(Ind(0) + "}")
 	else:
 		if declOnly:
-			print(Ind(2) + Meth.retTy + " " + Meth.name + "(")
+			print(Ind(2) + Meth.retTy + " __stdcall " + Meth.name + "(")
 			for Pi in range(0, PN):
 				com = ", "
 				if Pi == PN - 1:
 					com = ""
-				print(Ind(4) + Meth.params[Pi][0] + " " + Meth.params[Pi][1] + com)
+				print(Ind(4) + Meth.params[Pi].type + " " + Meth.params[Pi].name + com)
 			print(Ind(2) + ") override;")
 		else:
-			print(Ind(0) + Meth.retTy + " Wrapped" + obj + "::" + Meth.name + "(")
+			print(Ind(0) + Meth.retTy + " __stdcall Wrapped" + obj + "::" + Meth.name + "(")
 			for Pi in range(0, PN):
 				com = ", "
 				if Pi == PN - 1:
 					com = ""
-				print(Ind(2) + Meth.params[Pi][0] + " " + Meth.params[Pi][1] + com)
+				print(Ind(2) + Meth.params[Pi].type + " " + Meth.params[Pi].name + com)
 			print(Ind(0) + ") {")
 			
 			print(Ind(2) + "out() << \"" + obj + "(\" << m_pWrapped << \")::" + Meth.name + "\\n\";")
@@ -41,15 +41,16 @@ def dumpMethod(obj, Meth, declOnly):
 				#NumWrapped = 
 			# for scalar, ptr and array types there is different unwrap code
 			UnwrapTable = {}
-			for Pi in range(0, PN):
-				if countPtrs(Meth.params[Pi][0]) == 1:
-					UnwrapTable[Meth.params[Pi][1]] = "unwrap(" + Meth.params[Pi][1] + ")"
-				elif countPtrs(Meth.params[Pi][0]) == 2 and not  Meth.name in ["QueryInterface"] and not "Get" in Meth.name:
-					print(Ind(2) + Meth.params[Pi][0].split("*")[0] + " *tmpUnwrap[32];")
-					print(Ind(2) + "for (int i = 0; i < " + NumWrapped + "; i++) tmpUnwrap[i] = " + Meth.params[Pi][1] + "[i];")
-					UnwrapTable[Meth.params[Pi][1]] = "tmpUnwrap"
+			for param in Meth.params:
+				if countPtrs(param.type) == 2 and param.annot in ["IN_ARRAY", "INOUT_ARRAY"]:
+					print(Ind(2) + param.type.split("*")[0].replace("const", "") + " *tmp_" + param.name + "[32];")
+					print(Ind(2) + "for (int i = 0; i < " + param.number + "; i++) tmp_" + param.name + "[i] = unwrap(" + param.name + "[i]);")
+					UnwrapTable[param.name] = "tmp_" + param.name + ""
+				elif countPtrs(param.type) == 1 and param.annot in ["IN", "INOUT"]:
+					UnwrapTable[param.name] = "unwrap(" + param.name + ")"
 				else:
-					UnwrapTable[Meth.params[Pi][1]] = Meth.params[Pi][1]
+					UnwrapTable[param.name] = param.name
+
 			####### CALL
 			if Meth.retTy == "void":
 				print(Ind(2) + "m_pWrapped->" + Meth.name + "(")
@@ -59,44 +60,44 @@ def dumpMethod(obj, Meth, declOnly):
 				com = ", "
 				if Pi == PN - 1:
 					com = ""
-				print(Ind(4) + UnwrapTable[Meth.params[Pi][1]] + com)
+				print(Ind(4) + UnwrapTable[Meth.params[Pi].name] + com)
 			print(Ind(2) + ");")
 			####### POST-PROCESS
 			if Meth.name in ["GetDevice"]:
-				print(Ind(2) + "if(*" + Meth.params[-1][1] + ")")
-				print(Ind(4) + "HandleWrap(__uuidof(ID3D11Device), (void**)" + Meth.params[-1][1] + ");")
+				print(Ind(2) + "if(*" + Meth.params[-1].name + ")")
+				print(Ind(4) + "HandleWrap(__uuidof(ID3D11Device), (void**)" + Meth.params[-1].name + ");")
 			elif Meth.name in ["GetResource"]:
-				print(Ind(2) + "if(*" + Meth.params[-1][1] + ")")
-				print(Ind(4) + "HandleWrap(__uuidof(ID3D11Resource), (void**)" + Meth.params[-1][1] + ");")
+				print(Ind(2) + "if(*" + Meth.params[-1].name + ")")
+				print(Ind(4) + "HandleWrap(__uuidof(ID3D11Resource), (void**)" + Meth.params[-1].name + ");")
 			elif Meth.name in ["OpenSharedResource", "OpenSharedFence", "CreateFence"]:
-				print(Ind(2) + "if(*" + Meth.params[-1][1] + ")")
-				print(Ind(4) + "HandleWrap(ReturnedInterface, (void**)" + Meth.params[-1][1] + ");")
+				print(Ind(2) + "if(*" + Meth.params[-1].name + ")")
+				print(Ind(4) + "HandleWrap(ReturnedInterface, (void**)" + Meth.params[-1].name + ");")
 			elif Meth.name in ["GetCoreWindow"]:
-				print(Ind(2) + "if(*" + Meth.params[-1][1] + ")")
-				print(Ind(4) + "HandleWrap(refiid, (void**)" + Meth.params[-1][1] + ");")
+				print(Ind(2) + "if(*" + Meth.params[-1].name + ")")
+				print(Ind(4) + "HandleWrap(refiid, (void**)" + Meth.params[-1].name + ");")
 			elif Meth.name in ["OpenSharedResourceByName", "OpenSharedResource1"]:
-				print(Ind(2) + "if(*" + Meth.params[-1][1] + ")")
-				print(Ind(4) + "HandleWrap(returnedInterface, (void**)" + Meth.params[-1][1] + ");")
+				print(Ind(2) + "if(*" + Meth.params[-1].name + ")")
+				print(Ind(4) + "HandleWrap(returnedInterface, (void**)" + Meth.params[-1].name + ");")
 			elif Meth.name in ["QueryInterface", "GetParent",
 			"GetBuffer",
 			"EnumAdapterByLuid", "EnumWarpAdapter"]:
 				print(Ind(2) + "{")
 				print(Ind(4) + "if(!ret) {")
-				print(Ind(6) + "HandleWrap(riid, " + Meth.params[-1][1] + ");")
+				print(Ind(6) + "HandleWrap(riid, " + Meth.params[-1].name + ");")
 				print(Ind(4) + "}")
 				print(Ind(2) + "}")
 			elif Meth.name in ["GetDecoderBuffer"]:
 				print(Ind(2) + "assert(false && \"Wrap not implemented; Emit Seg Fault\");")
 			else:
 				for Pi in range(0, PN):
-					if "**" in Meth.params[Pi][0]:
-						RawType = Meth.params[Pi][0].split(" ")[0]
+					if "**" in Meth.params[Pi].type:
+						RawType = Meth.params[Pi].type.split(" ")[0]
 						if RawType == "struct":
-							RawType = Meth.params[Pi][0].split(" ")[1]
-						print(Ind(2) + "if (*" + Meth.params[Pi][1] + ")")
-						#print(Ind(4) + "*" + Meth.params[Pi][1] + " = new Wrapped" + RawType + "(*" + Meth.params[Pi][1] + ");")
-						print(Ind(4) + "*" + Meth.params[Pi][1] + " = getWrapper<" + RawType +
-						", Wrapped" + RawType + ">(*" + Meth.params[Pi][1] + ");")
+							RawType = Meth.params[Pi].type.split(" ")[1]
+						print(Ind(2) + "if (*" + Meth.params[Pi].name + ")")
+						#print(Ind(4) + "*" + Meth.params[Pi].name + " = new Wrapped" + RawType + "(*" + Meth.params[Pi].name + ");")
+						print(Ind(4) + "*" + Meth.params[Pi].name + " = getWrapper<" + RawType +
+						", Wrapped" + RawType + ">(*" + Meth.params[Pi].name + ");")
 			if Meth.retTy != "void":
 				print(Ind(2) + "return ret;")
 			print(Ind(0) + "}")
@@ -263,7 +264,7 @@ std::ostream& operator<<(std::ostream& os, REFGUID guid) {
 				com = ", "
 				if Pi == PN - 1:
 					com = ""
-				print(Ind(2) + FTy.params[Pi][0] + " " + FTy.params[Pi][1] + com)
+				print(Ind(2) + FTy.params[Pi].type + " " + FTy.params[Pi].name + com)
 			print(Ind(0) + ") {")
 			print(Ind(2) + "out() << \"" + FTy.name + "\\n\";")
 			if FTy.retTy == "void":
@@ -274,23 +275,23 @@ std::ostream& operator<<(std::ostream& os, REFGUID guid) {
 				com = ", "
 				if Pi == PN - 1:
 					com = ""
-				print(Ind(4) + FTy.params[Pi][1] + com)
+				print(Ind(4) + FTy.params[Pi].name + com)
 			print(Ind(2) + ");")
 			if FTy.name in ["D3DReflect"]:
 				print(Ind(2) + "assert(false && \"Wrap not implemented; Emit Seg Fault\");")
 			elif FTy.name in ["DXGIGetDebugInterface", "DXGIGetDebugInterface1",
 			"CreateDXGIFactory2", "CreateDXGIFactory", "CreateDXGIFactory1"]:
 				print(Ind(2) + "if(ret)")
-				print(Ind(4) + "HandleWrap(riid, (void**)" + FTy.params[-1][1] + ");")
+				print(Ind(4) + "HandleWrap(riid, (void**)" + FTy.params[-1].name + ");")
 			else:
 				for Pi in range(0, PN):
-					if "**" in FTy.params[Pi][0]:
-						RawType = FTy.params[Pi][0].split(" ")[0]
+					if "**" in FTy.params[Pi].type:
+						RawType = FTy.params[Pi].type.split(" ")[0]
 						if RawType == "struct":
-							RawType = FTy.params[Pi][0].split(" ")[1]
-						print(Ind(2) + "if (*" + FTy.params[Pi][1] + ")")
-						print(Ind(4) + "*" + FTy.params[Pi][1] + " = getWrapper<" + RawType +
-						", Wrapped" + RawType + ">(*" + FTy.params[Pi][1] + ");")
+							RawType = FTy.params[Pi].type.split(" ")[1]
+						print(Ind(2) + "if (*" + FTy.params[Pi].name + ")")
+						print(Ind(4) + "*" + FTy.params[Pi].name + " = getWrapper<" + RawType +
+						", Wrapped" + RawType + ">(*" + FTy.params[Pi].name + ");")
 			
 			if FTy.retTy != "void":
 				print(Ind(2) + "return ret;")

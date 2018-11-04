@@ -1681,11 +1681,28 @@ public:
         stream.flush();
         g_ss << "RETURN_TYPE(ctx, \"" << stmt << "\")\n";
         for (auto P : pFD->parameters()) {
+          auto b = P->getSourceRange().getBegin();// tkn.getLocation();
+          if (b.isMacroID())
+            b = CI->getSourceManager().getExpansionLoc(b);
+          b = b.getLocWithOffset(-1);
+          auto e = b;// clang::Lexer::getLocForEndOfToken(b, 0, CI->getSourceManager(), LangOptions());
+          if (e.isMacroID())
+            e = CI->getSourceManager().getExpansionLoc(e);
+          int offset = 0;
+          while (
+            *CI->getSourceManager().getCharacterData(b.getLocWithOffset(offset - 1)) != '\n'
+            && *CI->getSourceManager().getCharacterData(b.getLocWithOffset(offset - 1)) != ','
+            )
+            offset--;
+          b = CI->getSourceManager().getSpellingLoc(b.getLocWithOffset(offset));
+          auto annot = std::string(CI->getSourceManager().getCharacterData(b),
+            CI->getSourceManager().getCharacterData(e) - CI->getSourceManager().getCharacterData(b));
+
           std::string stmt;
           llvm::raw_string_ostream stream(stmt);
           P->getType().print(stream, PrintingPolicy(LangOptions()));
-          stream.flush();
-          g_ss << "PARAM(ctx, \"" << stmt << "\", \"" << P->getNameAsString() << "\")\n";
+          stream.flush(); 
+          g_ss << "PARAM(ctx, \"" << annot << "\", \"" << stmt << "\", \"" << P->getNameAsString() << "\")\n";
         }
         g_ss << "FUNC_END(ctx, \"" << pFD->getNameAsString() << "\")\n";
 
@@ -1745,11 +1762,32 @@ public:
             stream.flush();
             g_ss << "RETURN_TYPE(ctx, \"" << stmt << "\")\n";
             for (auto P : FD->parameters()) {
+              ///auto tknLoc = Lexer::GetBeginningOfToken(, CI->getSourceManager(), LangOptions());
+              //Token tkn;
+              //Lexer::getRawToken(tknLoc, tkn, CI->getSourceManager(), LangOptions());
+              //auto str = Lexer::getSourceText(CharSourceRange::getCharRange(CI->getSourceManager().getExpansionLoc(tkn.getLocation()),
+              //  CI->getSourceManager().getExpansionLoc(tkn.getEndLoc()) ), CI->getSourceManager(), LangOptions());
+              auto b = P->getSourceRange().getBegin();// tkn.getLocation();
+              if (b.isMacroID())
+                b = CI->getSourceManager().getExpansionLoc(b);
+              b = b.getLocWithOffset(-1);
+              auto e = b;// clang::Lexer::getLocForEndOfToken(b, 0, CI->getSourceManager(), LangOptions());
+              if (e.isMacroID())
+                e = CI->getSourceManager().getExpansionLoc(e);
+              int offset = 0;
+              while (
+                *CI->getSourceManager().getCharacterData(b.getLocWithOffset(offset - 1)) != '\n'
+                && *CI->getSourceManager().getCharacterData(b.getLocWithOffset(offset - 1)) != ','
+                )
+                offset--;
+              b = CI->getSourceManager().getSpellingLoc(b.getLocWithOffset(offset));
+              auto annot = std::string(CI->getSourceManager().getCharacterData(b),
+                CI->getSourceManager().getCharacterData(e) - CI->getSourceManager().getCharacterData(b));
               std::string stmt;
               llvm::raw_string_ostream stream(stmt);
               P->getType().print(stream, PrintingPolicy(LangOptions()));
               stream.flush();
-              g_ss << "PARAM(ctx, \"" << stmt << "\", \"" << P->getNameAsString() << "\")\n";
+              g_ss << "PARAM(ctx, \"" << annot << "\", \"" << stmt << "\", \"" << P->getNameAsString() << "\")\n";
             }
             g_ss << "FUNC_END(ctx, \"" << FD->getNameAsString() << "\")\n";
           }
