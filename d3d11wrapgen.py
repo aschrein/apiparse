@@ -6,7 +6,7 @@ def countPtrs(txt):
 		if char == "*":
 			result += 1
 	return result
-def dumpMethod(obj, Meth, declOnly):
+def dumpMethod(ctx, obj, Meth, declOnly):
 	PN = len(Meth.params)
 	if PN == 0:
 		if declOnly:
@@ -89,6 +89,30 @@ def dumpMethod(obj, Meth, declOnly):
 			elif Meth.name in ["GetDecoderBuffer"]:
 				print(Ind(2) + "assert(false && \"Wrap not implemented; Emit Seg Fault\");")
 			else:
+				for param in Meth.params:
+					if countPtrs(param.type) == 2 and param.annot in ["INOUT_ARRAY"]:
+						RawType = param.type.split(" ")[0]
+						if RawType == "struct":
+							RawType = param.type.split(" ")[1]
+						if RawType in ctx.apiTypes.keys():
+							print(Ind(2) + "for (int i = 0; i < " + param.number + "; i++) if (tmp_" + param.name + "[i]) " + param.name + "[i] = getWrapper<" + RawType +
+							", Wrapped" + RawType + ">(tmp_" + param.name + "[i]);")
+					if countPtrs(param.type) == 2 and param.annot in ["OUT_ARRAY"]:
+						RawType = param.type.split(" ")[0]
+						if RawType == "struct":
+							RawType = param.type.split(" ")[1]
+						if RawType in ctx.apiTypes.keys():
+							print(Ind(2) + "for (int i = 0; i < " + param.number + "; i++) if (" + param.name + " && " + param.name + "[i]) " + param.name + "[i] = getWrapper<" + RawType +
+							", Wrapped" + RawType + ">(" + param.name + "[i]);")
+					elif countPtrs(param.type) == 1 and param.annot in ["OUT", "INOUT"]:
+						RawType = param.type.split(" ")[0]
+						if RawType == "struct":
+							RawType = param.type.split(" ")[1]
+						if RawType in ctx.apiTypes.keys():
+							print(Ind(4) + "if (" + param.name + " && *" + param.name  + " ) *" + param.name + " = getWrapper<" + RawType + ", Wrapped" + RawType + ">(*" + param.name + ");")
+					else:
+						pass
+			""""
 				for Pi in range(0, PN):
 					if "**" in Meth.params[Pi].type:
 						RawType = Meth.params[Pi].type.split(" ")[0]
@@ -98,6 +122,7 @@ def dumpMethod(obj, Meth, declOnly):
 						#print(Ind(4) + "*" + Meth.params[Pi].name + " = new Wrapped" + RawType + "(*" + Meth.params[Pi].name + ");")
 						print(Ind(4) + "*" + Meth.params[Pi].name + " = getWrapper<" + RawType +
 						", Wrapped" + RawType + ">(*" + Meth.params[Pi].name + ");")
+						"""
 			if Meth.retTy != "void":
 				print(Ind(2) + "return ret;")
 			print(Ind(0) + "}")
@@ -236,7 +261,7 @@ std::ostream& operator<<(std::ostream& os, REFGUID guid) {
 				#print("//inherited from " + Base.name)
 				#dumpMethod(TyName, Meth, True)
 		for Name, Meth in MethSet.items():
-			dumpMethod(TyName, Meth, True)
+			dumpMethod(ctx, TyName, Meth, True)
 		print("};")
 	print("typedef WrappedID3D10Blob WrappedID3DBlob;")
 	for TyName, Ty in ctx.apiTypes.items():
@@ -248,7 +273,7 @@ std::ostream& operator<<(std::ostream& os, REFGUID guid) {
 			for Meth in Base.methods:
 				MethSet[Meth.name] = Meth
 		for Name, Meth in MethSet.items():
-			dumpMethod(TyName, Meth, False)	
+			dumpMethod(ctx, TyName, Meth, False)	
 		
 		
 	for FName, FTy in ctx.apiFuncs.items():
