@@ -300,6 +300,7 @@ std::ostream& operator<<(std::ostream& os, REFGUID guid) {
 			print(Ind(4) + "m_p" + base.name + " = nullptr;");
 			if Ty.hasBase(ctx, "IUnknown"):
 				print(Ind(4) + "pWrapped->QueryInterface(__uuidof(" + base.name + "), (void **)&m_p" + base.name + ");")
+				print(Ind(4) + "m_p" + base.name + "->Release();")
 			else:
 				print(Ind(4) + "m_p" + base.name + " = (" + base.name + "*)pWrapped;")
 		#if Ty.hasBase(ctx, "IUnknown"):
