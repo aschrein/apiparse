@@ -78,6 +78,10 @@ add_library (injectee_iat MODULE
     injectee_iat.cpp
 	${CMAKE_CURRENT_BINARY_DIR}/d3d11wrapper.cpp
 )
+
+target_include_directories(injectee_iat PUBLIC
+	${CMAKE_CURRENT_SOURCE_DIR}
+)
 # set_target_properties(injectee_iat PROPERTIES LINK_FLAGS "${LINK_FLAGS} /SUBSYSTEM:WINDOWS /ENTRY:DllMainStartup")
 # target_compile_options(injectee_iat PRIVATE "/clr /EHs-")
 # set_target_properties (injectee_iat PROPERTIES

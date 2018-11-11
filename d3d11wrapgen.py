@@ -7,6 +7,40 @@ def countPtrs(txt):
 			result += 1
 	return result
 
+"""
+def writeCPP(ctx, Ty, base, Meth):
+	print(Ind(2) + "out() << \"static void " + Meth.name + "_\" << getEventNumber() << \"() {\\n\";")
+	UnwrapTable = {}
+	def addTemp(type, name):
+		if countPtrs(param.type) == 2 and param.annot in ["IN_ARRAY", "INOUT_ARRAY"]:
+			print(Ind(2) +  "out() << \"  \" << \"" + param.undertype + " *tmp_" + param.name + "[0x80];\\n\"")
+			print(Ind(2) + "for (uint32_t i = 0; i < " + param.number + "; i++) tmp_" + param.name + "[i] = getInBlobPtr<" +  + "(" + param.name + "[i]);")
+			UnwrapTable[param.name] = "tmp_" + param.name + ""
+		elif countPtrs(param.type) == 1 and param.annot in ["IN", "INOUT"]:
+			print(Ind(2) + "auto unwrapped_" + param.name + " = unwrap("+ param.name + ");")
+			UnwrapTable[param.name] = "unwrapped_" + param.name + ""
+			print(Ind(2) + "type *tmp_" + name + ";\\n")
+		else:
+			print("" + str(countPtrs(param.type)) + " " + param.annot)
+			assert(False) #unsupported
+
+	def wrapParam(param):
+		if "INOUT" in param.annot:
+			
+		elif "IN" in param.annot:
+			if param.ptrsNum == 0:
+				print(Ind(2) + "out() << \"  \" << \"getInBlobRef<" + param.undertype + ">(\" << serializeRef(" + param.name + ")")
+			elif param.ptrsNum == 1:
+				print(Ind(2) + "out() << \"  \" << \"getInBlobPtr<" + param.undertype + ">(\" << serializePtr(" + param.name + ")")
+			else:
+				assert(False) #unsupported
+		else:
+			print(Ind(2) + "out() << \"  \" << \"&tmp_" + param.name + "\" << \"\\n\";")
+	
+
+
+	print(Ind(2) + "out() << \"}\\n\";")
+"""
 
 def dumpMethod(ctx, Ty, base, Meth, declOnly):
 	PN = len(Meth.params)
@@ -51,6 +85,26 @@ def dumpMethod(ctx, Ty, base, Meth, declOnly):
 			# for scalar, ptr and array types there is different unwrap code
 			UnwrapTable = {}
 			for param in Meth.params:
+				if not param.undertype in ctx.apiTypes:
+					UnwrapTable[param.name] = param.name
+					
+					if not "IN" in param.annot:
+						continue
+
+					if countPtrs(param.type) == 0:
+						print(Ind(2) + "size_t hndl_" + param.name + " = " + "serializeRef(" + param.name + ");")
+					elif countPtrs(param.type) == 1:
+						print(Ind(2) + "size_t hndl_" + param.name + " = " + "serializePtr(" + param.name + ");")
+					else:
+						#assert(param.annot == "OUT")
+
+						print(Ind(2) + "size_t hndl_" + param.name + "[0x100];")
+						print(Ind(2) + "for (uint32_t i = 0; i < " + param.number + "; i++) hndl_" + param.name + "[i] = serializePtr(" + param.name + "[i]);")
+
+						#assert(False)# "** is not supported here")
+					
+					continue
+
 				if countPtrs(param.type) == 2 and param.annot in ["IN_ARRAY", "INOUT_ARRAY"]:
 					print(Ind(2) + param.type.split("*")[0].replace("const", "") + " *tmp_" + param.name + "[32];")
 					print(Ind(2) + "for (uint32_t i = 0; i < " + param.number + "; i++) tmp_" + param.name + "[i] = unwrap(" + param.name + "[i]);")
@@ -178,99 +232,7 @@ def genQueryImpl(ctx):
 	print(Ind(0) + "}")
 
 def genWrappers(ctx):
-	print("""#include <d3d11.h>
-#include <d3d11_1.h>
-#include <d3d11_2.h>
-#include <d3d11_3.h>
-#include <d3d11_4.h>
-#include <d3dcompiler.h>
-#include <dxgi.h>
-#include <dxgi1_2.h>
-#include <dxgi1_3.h>
-#include <dxgidebug.h>
-#include <unordered_map>
-#include <fstream>
-#include <assert.h>
-#include <mutex>
-static std::ofstream &out()
-{
-  static std::ofstream file("log");
-  file.setf(std::ios::unitbuf);
-  return file;
-}
-std::mutex &getGlobalLock()
-{
-  static std::mutex m;
-  return m;
-}
-#define GLOBAL_LOCK std::lock_guard<std::mutex> GLOBAL_LOCK_VAR(getGlobalLock())
-static std::unordered_map<size_t, size_t> &getWrapTable()
-{
-  static std::unordered_map<size_t, size_t> table;
-  return table;
-}
-static std::unordered_map<size_t, size_t> &getUnwrapTable()
-{
-  static std::unordered_map<size_t, size_t> table;
-  return table;
-}
-template<typename T, typename WT>
-T *getWrapper(T *t)
-{
-  GLOBAL_LOCK;
-  auto &wt = getWrapTable();
-  auto fd = wt.find(reinterpret_cast<size_t>((void*)t));
-  if (fd == wt.end()) {
-    auto *wrap = new WT(t);
-    return reinterpret_cast<T*>(wrap);
-  }
-  else
-  {
-    return reinterpret_cast<T*>((*fd).second);
-  }
-}
-template<typename T>
-T *unwrap(T *t)
-{
-  GLOBAL_LOCK;
-  auto &uwt = getUnwrapTable();
-  auto fd = uwt.find(reinterpret_cast<size_t>((void*)t));
-  if (fd == uwt.end()) {
-    return t;
-  }
-  else
-  {
-    return reinterpret_cast<T*>((*fd).second);
-  }
-}
-std::ostream& operator<<(std::ostream& os, REFGUID guid) {
-
-  os << std::uppercase;
-  os.width(8);
-  os << std::hex << guid.Data1 << '-';
-
-  os.width(4);
-  os << std::hex << guid.Data2 << '-';
-
-  os.width(4);
-  os << std::hex << guid.Data3 << '-';
-
-  os.width(2);
-  os << std::hex
-    << static_cast<short>(guid.Data4[0])
-    << static_cast<short>(guid.Data4[1])
-    << '-'
-    << static_cast<short>(guid.Data4[2])
-    << static_cast<short>(guid.Data4[3])
-    << static_cast<short>(guid.Data4[4])
-    << static_cast<short>(guid.Data4[5])
-    << static_cast<short>(guid.Data4[6])
-    << static_cast<short>(guid.Data4[7]);
-  os << std::nouppercase;
-  return os;
-}
-""")
-	
+	print("""#include <cppdumputils.h>""")
 
 	derivFlags = set()
 	for TyName, Ty in ctx.apiTypes.items():

@@ -35,11 +35,20 @@ class APIFunc:
 import re
 
 class APIParam:
+	def countPtrs(txt):
+		result = 0
+		for char in txt:
+			if char == "*":
+				result += 1
+		return result
 	def __init__(self, annot, type, name):
 		self.name = name
 		self.annot = "IN"
 		self.number = "NOT_SET"
 		self.type = type
+		self.undertype = type.replace("const", "").replace("*", "").replace(" ", "")
+		self.ptrsNum = countPtrs(self.type)
+
 		if "_Inout_" in annot:
 			self.annot = "INOUT"
 		elif "_Out_writes_all_opt_" in annot:
@@ -103,14 +112,64 @@ class APIParam:
 		elif "_Out_" in annot:
 			self.annot = "OUT"
 
+class APIStruct:
+	def __init__(self, name):
+		self.name = name
+		self.fields = []
+
+class APIField:
+	def __init__(self, type, name):
+		self.type = type
+		self.name = name
+
+class APIEnum:
+	def __init__(self, name):
+		self.name = name
+		self.fields = []
+
+class APIEnumField:
+	def __init__(self, name, val):
+		self.val = val
+		self.name = name
+
 class APIContext:
 	def __init__(self):
 		self.apiTypes = {}
+		self.apiStructs = {}
+		self.apiEnums = {}
 		self.apiFuncs = {}
 		self.curType = None
+		self.curStruct = None
+		self.curEnum = None
 		self.curFunc = None
 		self.dumpSet = []
 		self.wrapTable = {}
+
+def STRUCT_BEGIN(ctx, name):
+	assert(ctx.curStruct == None)
+	ctx.curStruct = APIStruct(name)
+
+def ADD_FIELD(ctx, type, name):
+	assert(ctx.curStruct != None)
+	ctx.curStruct.fields.append(APIField(type, name))
+
+def STRUCT_END(ctx, name):
+	assert(ctx.curStruct != None)
+	ctx.apiStructs[ctx.curStruct.name] = ctx.curStruct
+	ctx.curStruct = None
+
+def ENUM_BEGIN(ctx, name):
+	assert(ctx.curEnum == None)
+	ctx.curEnum = APIEnum(name)
+
+def ADD_ENUM_FIELD(ctx, name, val):
+	assert(ctx.curEnum != None)
+	ctx.curEnum.fields.append(APIEnumField(name, val))
+
+def ENUM_END(ctx, name):
+	assert(ctx.curEnum != None)
+	ctx.apiEnums[ctx.curEnum.name] = ctx.curEnum
+	ctx.curEnum = None
 
 def CLASS_BEGIN(ctx, name):
 	assert(ctx.curType == None)

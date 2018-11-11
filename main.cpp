@@ -1783,11 +1783,18 @@ public:
               b = CI->getSourceManager().getSpellingLoc(b.getLocWithOffset(offset));
               auto annot = std::string(CI->getSourceManager().getCharacterData(b),
                 CI->getSourceManager().getCharacterData(e) - CI->getSourceManager().getCharacterData(b));
-              std::string stmt;
-              llvm::raw_string_ostream stream(stmt);
-              P->getType().print(stream, PrintingPolicy(LangOptions()));
-              stream.flush();
-              g_ss << "PARAM(ctx, \"" << annot << "\", \"" << stmt << "\", \"" << P->getNameAsString() << "\")\n";
+              std::string type, rawtype;
+              {
+                llvm::raw_string_ostream stream(type);
+                P->getType().print(stream, PrintingPolicy(LangOptions()));
+                stream.flush();
+              }
+              /*{
+                llvm::raw_string_ostream stream(type);
+                P->getType()->getCanonicalTypeUnqualified()->getTypePtr()->asSt;
+              }*/
+              
+              g_ss << "PARAM(ctx, \"" << annot << "\", \"" << type << "\", \"" << P->getNameAsString() << "\")\n";
             }
             g_ss << "FUNC_END(ctx, \"" << FD->getNameAsString() << "\")\n";
           }
