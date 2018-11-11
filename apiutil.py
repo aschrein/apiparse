@@ -35,7 +35,7 @@ class APIFunc:
 import re
 
 class APIParam:
-	def countPtrs(txt):
+	def countPtrs(self, txt):
 		result = 0
 		for char in txt:
 			if char == "*":
@@ -46,8 +46,8 @@ class APIParam:
 		self.annot = "IN"
 		self.number = "NOT_SET"
 		self.type = type
-		self.undertype = type.replace("const", "").replace("*", "").replace(" ", "")
-		self.ptrsNum = countPtrs(self.type)
+		self.undertype = type.replace("const", "").replace("*", "").replace("&", "").replace(" ", "")
+		self.ptrsNum = self.countPtrs(self.type)
 
 		if "_Inout_" in annot:
 			self.annot = "INOUT"

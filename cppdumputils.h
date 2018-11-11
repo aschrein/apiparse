@@ -389,10 +389,19 @@ void printParamFinale(std::stringstream &ss, Param const &param, void *pData)
 
 void dumpMethodEvent(
 	void *pThis,
-	Interface const &obj,
-	Method const &method,
+	std::string objName,
+	std::string methName,
 	std::unordered_map<std::string, void *> const &paramValues
 ) {
+	GLOBAL_LOCK;
+	auto &g_classTable = getGlobalObjTable();
+	auto iter = g_classTable.find(objName);
+	assert(iter != g_classTable.end());
+	Interface const &obj = iter->second;
+	auto miter = obj.methods.find(methName);
+	assert(miter != obj.methods.end());
+	Method const &method = miter->second;
+
 	std::stringstream ss;
 	ss << "static void " << method.name << "_" << getEventNumber() << "() {\n";
 	assert(method.params.size() == paramValues.size());

@@ -50,10 +50,10 @@ def dumpMethod(ctx, Ty, base, Meth, declOnly):
 			print(Ind(2) + Meth.retTy + " __stdcall " + Meth.name + "() override;")
 		else:
 			print(Ind(0) + Meth.retTy + " __stdcall Wrapped" + Ty.name + "::" + Meth.name + "() {")
-			print(Ind(2) + "out() << \"" + Ty.name + "(\" << " + wrapName + " << \")::" + Meth.name + "\\n\";")
+			#print(Ind(2) + "out() << \"" + Ty.name + "(\" << " + wrapName + " << \")::" + Meth.name + "\\n\";")
 			if Meth.retTy != "void":
 				print(Ind(2) + "auto ret = " + wrapName + "->" + Meth.name + "();")
-				print(Ind(2) + "out() << \"\\treturned \" << ret << \"\\n\";")
+				#print(Ind(2) + "out() << \"\\treturned \" << ret << \"\\n\";")
 				print(Ind(2) + "return ret;")
 			else:
 				print(Ind(2) + "return " + wrapName + "->" + Meth.name + "();")
@@ -77,7 +77,7 @@ def dumpMethod(ctx, Ty, base, Meth, declOnly):
 				print(Ind(2) + Meth.params[Pi].type + " " + Meth.params[Pi].name + com)
 			print(Ind(0) + ") {")
 			
-			print(Ind(2) + "out() << \"" + Ty.name + "(\" << " + wrapName + " << \")::" + Meth.name + "\\n\";")
+			#print(Ind(2) + "out() << \"" + Ty.name + "(\" << " + wrapName + " << \")::" + Meth.name + "\\n\";")
 			####### PRE-PROCESS
 			NumWrapped = ""
 			#if Meth.name in ["QueryInterface"]:
@@ -85,28 +85,9 @@ def dumpMethod(ctx, Ty, base, Meth, declOnly):
 			# for scalar, ptr and array types there is different unwrap code
 			UnwrapTable = {}
 			for param in Meth.params:
-				if not param.undertype in ctx.apiTypes:
-					UnwrapTable[param.name] = param.name
-					
-					if not "IN" in param.annot:
-						continue
-
-					if countPtrs(param.type) == 0:
-						print(Ind(2) + "size_t hndl_" + param.name + " = " + "serializeRef(" + param.name + ");")
-					elif countPtrs(param.type) == 1:
-						print(Ind(2) + "size_t hndl_" + param.name + " = " + "serializePtr(" + param.name + ");")
-					else:
-						#assert(param.annot == "OUT")
-
-						print(Ind(2) + "size_t hndl_" + param.name + "[0x100];")
-						print(Ind(2) + "for (uint32_t i = 0; i < " + param.number + "; i++) hndl_" + param.name + "[i] = serializePtr(" + param.name + "[i]);")
-
-						#assert(False)# "** is not supported here")
-					
-					continue
 
 				if countPtrs(param.type) == 2 and param.annot in ["IN_ARRAY", "INOUT_ARRAY"]:
-					print(Ind(2) + param.type.split("*")[0].replace("const", "") + " *tmp_" + param.name + "[32];")
+					print(Ind(2) + param.type.split("*")[0].replace("const", "") + " *tmp_" + param.name + "[0x80];")
 					print(Ind(2) + "for (uint32_t i = 0; i < " + param.number + "; i++) tmp_" + param.name + "[i] = unwrap(" + param.name + "[i]);")
 					UnwrapTable[param.name] = "tmp_" + param.name + ""
 				elif countPtrs(param.type) == 1 and param.annot in ["IN", "INOUT"]:
@@ -126,8 +107,8 @@ def dumpMethod(ctx, Ty, base, Meth, declOnly):
 					com = ""
 				print(Ind(4) + UnwrapTable[Meth.params[Pi].name] + com)
 			print(Ind(2) + ");")
-			if Meth.retTy != "void":
-				print(Ind(2) + "out() << \"\\treturned \" << ret << \"\\n\";")
+			#if Meth.retTy != "void":
+				#print(Ind(2) + "out() << \"\\treturned \" << ret << \"\\n\";")
 			####### POST-PROCESS
 			if Meth.name in ["GetDevice"]:
 				print(Ind(2) + "if(*" + Meth.params[-1].name + ")")
@@ -206,6 +187,12 @@ def dumpMethod(ctx, Ty, base, Meth, declOnly):
 						print(Ind(4) + "*" + Meth.params[Pi].name + " = getWrapper<" + RawType +
 						", Wrapped" + RawType + ">(*" + Meth.params[Pi].name + ");")
 						"""
+
+			print(Ind(2) + "dumpMethodEvent((void*)this, \"" + Ty.name + "\", \"" + Meth.name + "\", {")
+			for param in Meth.params:
+				print(Ind(4) + "{\"" + param.name + "\", (void*)&" + param.name + "},")
+			print(Ind(2) + "});")
+
 			if Meth.retTy != "void":
 				print(Ind(2) + "return ret;")
 			print(Ind(0) + "}")
@@ -224,12 +211,36 @@ def genQueryImpl(ctx):
 		print(Ind(4) + "return;")
 		print(Ind(2) + "}")
 	print(Ind(2) + "{")
-	print(Ind(4) + "out() << \"[WARNING] Unknown(\" << *ppvObject << \") riid:\" << riid << \"\\n\";")
+	#print(Ind(4) + "out() << \"[WARNING] Unknown(\" << *ppvObject << \") riid:\" << riid << \"\\n\";")
 	#print(Ind(4) + "return pObj->" + name + "(riid, ppvObject);")
 	#print(Ind(4) + "assert(false && \"Wrap not implemented; Emit Seg Fault\");")
 	print(Ind(2) + "}")
 	#print(Ind(2) + "return S_OK;")
 	print(Ind(0) + "}")
+
+def genInterfaceTableInit(ctx):
+	print("class TableInit {")
+	print("public:")
+	print(Ind(2) + "TableInit() {")
+	for TyName, Ty in ctx.apiTypes.items():
+		print(Ind(4) + "CLASS_BEGIN(\"" + Ty.name + "\");")
+		for Meth in Ty.methods:
+			print(Ind(4) + "METHOD_BEGIN(\"" + Meth.retTy + "\", \"" + Meth.name + "\");")
+			for param in Meth.params:
+				isInterface = "true"
+				if not param.undertype in ctx.apiTypes:
+					isInterface = "false"
+				print(Ind(4) + "PARAM(\"" + param.type + "\", \"" + param.undertype +
+				"\", \"" + param.name +
+				"\", ParamAnnot::_" + param.annot + "_" +
+				", " + str(param.ptrsNum) +
+				", " + isInterface +
+				", sizeof(" + param.type + ")" +
+				");")
+			print(Ind(4) + "METHOD_END(\"" + Meth.retTy + "\", \"" + Meth.name + "\");")
+		print(Ind(4) + "CLASS_END(\"" + Ty.name + "\");")
+	print(Ind(2) + "}")
+	print("} g_tableInit;")
 
 def genWrappers(ctx):
 	print("""#include <cppdumputils.h>""")
@@ -248,6 +259,7 @@ def genWrappers(ctx):
 				ctx.wrapTable["ID3DBlob"] = Ty
 			ctx.wrapTable[Ty.name] = Ty
 
+	genInterfaceTableInit(ctx)
 	genQueryImpl(ctx)
 
 	for Ty in ctx.dumpSet:
@@ -263,7 +275,7 @@ def genWrappers(ctx):
 		print("public:")
 		print(Ind(2) + "template<typename T>")
 		print(Ind(2) + "Wrapped" + TyName + "(T *pWrapped) {")
-		print(Ind(4) + "out() << \"[CREATE] " + TyName + "(\" << pWrapped << \")\\n\";")
+		#print(Ind(4) + "out() << \"[CREATE] " + TyName + "(\" << pWrapped << \")\\n\";")
 		print(Ind(4) + "assert(pWrapped);")
 		#print(Ind(4) + "GLOBAL_LOCK;")
 		print(Ind(4) + "auto &uwt = getUnwrapTable();")
@@ -276,7 +288,7 @@ def genWrappers(ctx):
 				print(Ind(6) + "m_p" + base.name + "->Release();")
 				print(Ind(6) + "uwt[reinterpret_cast<size_t>((void*)this)] = reinterpret_cast<size_t>((void*)m_p" + base.name + ");")
 				print(Ind(6) + "wt[reinterpret_cast<size_t>((void*)m_p" + base.name + ")] = reinterpret_cast<size_t>((void*)this);")
-				print(Ind(6) + "out() << \"[MAP] \" << m_p" + base.name + " << \" -> \" << this << \"\\n\";")
+				#print(Ind(6) + "out() << \"[MAP] \" << m_p" + base.name + " << \" -> \" << this << \"\\n\";")
 				print(Ind(4) + "}")
 
 			else:
@@ -311,7 +323,7 @@ def genWrappers(ctx):
 		PN = len(FTy.params)
 		if PN == 0:
 			print(Ind(0) + FTy.retTy + " Wrapped" + FTy.name + "() {")
-			print(Ind(2) + "out() << \"" + FTy.name + "\\n\";")
+			#print(Ind(2) + "out() << \"" + FTy.name + "\\n\";")
 			print(Ind(2) + "return " + FTy.name + "();")
 			print(Ind(0) + "}")
 		else:
@@ -322,7 +334,7 @@ def genWrappers(ctx):
 					com = ""
 				print(Ind(2) + FTy.params[Pi].type + " " + FTy.params[Pi].name + com)
 			print(Ind(0) + ") {")
-			print(Ind(2) + "out() << \"" + FTy.name + "\\n\";")
+			#print(Ind(2) + "out() << \"" + FTy.name + "\\n\";")
 			######
 			NumWrapped = ""
 			#if Meth.name in ["QueryInterface"]:
