@@ -188,7 +188,7 @@ def dumpMethod(ctx, Ty, base, Meth, declOnly):
 						", Wrapped" + RawType + ">(*" + Meth.params[Pi].name + ");")
 						"""
 
-			print(Ind(2) + "dumpMethodEvent((void*)this, \"" + Ty.name + "\", \"" + Meth.name + "\", {")
+			print(Ind(2) + "dumpMethodEvent((void*)this, \"" + base.name + "\", \"" + Meth.name + "\", {")
 			for param in Meth.params:
 				print(Ind(4) + "{\"" + param.name + "\", (void*)&" + param.name + "},")
 			print(Ind(2) + "});")
@@ -230,12 +230,17 @@ def genInterfaceTableInit(ctx):
 				isInterface = "true"
 				if not param.undertype in ctx.apiTypes:
 					isInterface = "false"
+				undersize = "sizeof(" + param.undertype + ")"
+				if param.undertype == "void":
+					undersize = "0"
 				print(Ind(4) + "PARAM(\"" + param.type + "\", \"" + param.undertype +
 				"\", \"" + param.name +
 				"\", ParamAnnot::_" + param.annot + "_" +
 				", " + str(param.ptrsNum) +
 				", " + isInterface +
 				", sizeof(" + param.type + ")" +
+				", " + undersize + "" +
+				", \"" + param.number + "\"" +
 				");")
 			print(Ind(4) + "METHOD_END(\"" + Meth.retTy + "\", \"" + Meth.name + "\");")
 		print(Ind(4) + "CLASS_END(\"" + Ty.name + "\");")

@@ -46,7 +46,7 @@ class APIParam:
 		self.annot = "IN"
 		self.number = "NOT_SET"
 		self.type = type
-		self.undertype = type.replace("const", "").replace("*", "").replace("&", "").replace(" ", "")
+		self.undertype = type.replace("const", "").replace("*", "").replace("&", "").replace("enum", "").replace("struct", "").replace(" ", "")
 		self.ptrsNum = self.countPtrs(self.type)
 
 		if "_Inout_" in annot:
