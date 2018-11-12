@@ -1,5 +1,7 @@
 #include <d3d11.h>
 #include <tchar.h>
+#include <vector>
+#include <string>
 
 static ID3D11Device*            g_pd3dDevice = NULL;
 static ID3D11DeviceContext*     g_pd3dDeviceContext = NULL;
@@ -25,7 +27,7 @@ HRESULT CreateDeviceD3D(HWND hWnd)
   sd.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
 
   UINT createDeviceFlags = 0;
-  //createDeviceFlags |= D3D11_CREATE_DEVICE_DEBUG;
+  createDeviceFlags |= D3D11_CREATE_DEVICE_DEBUG;
   D3D_FEATURE_LEVEL featureLevel;
   const D3D_FEATURE_LEVEL featureLevelArray[1] = { D3D_FEATURE_LEVEL_11_0 };
   if (D3D11CreateDeviceAndSwapChain(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, createDeviceFlags, featureLevelArray, 1, D3D11_SDK_VERSION, &sd, &g_pSwapChain, &g_pd3dDevice, &featureLevel, &g_pd3dDeviceContext) != S_OK)
@@ -55,6 +57,10 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
   return DefWindowProc(hWnd, msg, wParam, lParam);
 }
 
+HWND g_window;
+typedef void(*Event)(void);
+extern std::vector<std::pair<std::string, Event>> g_events;
+
 int main(int, char**)
 {
   WNDCLASSEX wc = { sizeof(WNDCLASSEX), CS_CLASSDC, WndProc, 0L, 0L, GetModuleHandle(NULL), NULL, NULL, NULL, NULL, _T("Example"), NULL };
@@ -62,11 +68,17 @@ int main(int, char**)
   HWND hwnd = CreateWindow(_T("Example"), _T("Example"), WS_OVERLAPPEDWINDOW, 100, 100, 1280, 800, NULL, NULL, wc.hInstance, NULL);
   ShowWindow(hwnd, SW_SHOWDEFAULT);
   UpdateWindow(hwnd);
-
+	g_window = hwnd;
   if (CreateDeviceD3D(hwnd) < 0)
   {
     return 1;
   }
+
+	for (auto const &item : g_events)
+	{
+		item.second();
+	}
+
   MSG msg;
   ZeroMemory(&msg, sizeof(msg));
   bool oneshot = false;

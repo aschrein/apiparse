@@ -57,13 +57,48 @@ def dumpMethod(ctx, Ty, base, Meth, declOnly):
 		else:
 			print(Ind(0) + Meth.retTy + " __stdcall Wrapped" + Ty.name + "::" + Meth.name + "() {")
 			#print(Ind(2) + "out() << \"" + Ty.name + "(\" << " + wrapName + " << \")::" + Meth.name + "\\n\";")
+			print(Ind(2) + "assert(" + wrapName + ");")
+			######## RECURSION CHECK
+			print(Ind(2) + "bool recursionFlag = false;")
+			print(Ind(2) + "getRecursionFlag().compare_exchange_strong(recursionFlag, true);")
+			########
 			if Meth.retTy != "void":
 				print(Ind(2) + "auto ret = " + wrapName + "->" + Meth.name + "();")
 				#print(Ind(2) + "out() << \"\\treturned \" << ret << \"\\n\";")
-				print(Ind(2) + "return ret;")
+
+				##### special case for Release()
+				if Meth.name == "Release":
+					print(Ind(2) + "if (recursionFlag) {")
+					print(Ind(4) + "if (!ret) delete this;")
+					print(Ind(4) + "return ret;")
+					print(Ind(2) + "}")
+					print(Ind(2) + "getRecursionFlag() = false;")
+					dumpCPP()
+					print(Ind(2) + "if (!ret) delete this;")
+					print(Ind(2) + "return ret;")
+				else:
+					######## RECURSION CHECK
+					print(Ind(2) + "if (recursionFlag)")
+					if Meth.retTy != "void":
+						print(Ind(4) + "return ret;")
+					else:
+						print(Ind(4) + "return;")
+					print(Ind(2) + "getRecursionFlag() = false;")
+					########
+					dumpCPP()
+					print(Ind(2) + "return ret;")
 			else:
-				print(Ind(2) + "return " + wrapName + "->" + Meth.name + "();")
-			dumpCPP()
+				print(Ind(2) + "" + wrapName + "->" + Meth.name + "();")
+				######## RECURSION CHECK
+				print(Ind(2) + "if (recursionFlag)")
+				if Meth.retTy != "void":
+					print(Ind(4) + "return ret;")
+				else:
+					print(Ind(4) + "return;")
+				print(Ind(2) + "getRecursionFlag() = false;")
+				dumpCPP()
+				########
+			
 			print(Ind(0) + "}")
 	else:
 		if declOnly:
@@ -82,8 +117,12 @@ def dumpMethod(ctx, Ty, base, Meth, declOnly):
 					com = ""
 				print(Ind(2) + Meth.params[Pi].type + " " + Meth.params[Pi].name + com)
 			print(Ind(0) + ") {")
-			
+			print(Ind(2) + "assert(" + wrapName + ");")
 			#print(Ind(2) + "out() << \"" + Ty.name + "(\" << " + wrapName + " << \")::" + Meth.name + "\\n\";")
+			######## RECURSION CHECK
+			print(Ind(2) + "bool recursionFlag = false;")
+			print(Ind(2) + "getRecursionFlag().compare_exchange_strong(recursionFlag, true);")
+			########
 			####### PRE-PROCESS
 			NumWrapped = ""
 			#if Meth.name in ["QueryInterface"]:
@@ -113,6 +152,14 @@ def dumpMethod(ctx, Ty, base, Meth, declOnly):
 					com = ""
 				print(Ind(4) + UnwrapTable[Meth.params[Pi].name] + com)
 			print(Ind(2) + ");")
+			######## RECURSION CHECK
+			print(Ind(2) + "if (recursionFlag)")
+			if Meth.retTy != "void":
+				print(Ind(4) + "return ret;")
+			else:
+				print(Ind(4) + "return;")
+			print(Ind(2) + "getRecursionFlag() = false;")
+			########
 			#if Meth.retTy != "void":
 				#print(Ind(2) + "out() << \"\\treturned \" << ret << \"\\n\";")
 			####### POST-PROCESS
@@ -318,26 +365,42 @@ def genWrappers(ctx):
 		for base in wrappedTypes:
 			print(Ind(2) + base.name + " *m_p" + base.name + ";")
 		print("public:")
+		#### CONSTRUCTOR
 		print(Ind(2) + "template<typename T>")
 		print(Ind(2) + "Wrapped" + TyName + "(T *pWrapped) {")
-		#print(Ind(4) + "out() << \"[CREATE] " + TyName + "(\" << pWrapped << \")\\n\";")
+		print(Ind(4) + "out() << \"// [CREATE] " + TyName + "(0x\" << this << \", 0x\" << pWrapped << \" )\\n\";")
 		print(Ind(4) + "assert(pWrapped);")
 		#print(Ind(4) + "GLOBAL_LOCK;")
 		print(Ind(4) + "auto &uwt = getUnwrapTable();")
 		print(Ind(4) + "auto &wt = getWrapTable();")
+		print(Ind(4) + "HRESULT res = S_OK;")
+
 		for base in reversed(wrappedTypes):
 			print(Ind(4) + "m_p" + base.name + " = nullptr;");
 			if Ty.hasBase(ctx, "IUnknown"):
-				print(Ind(4) + "pWrapped->QueryInterface(__uuidof(" + base.name + "), (void **)&m_p" + base.name + ");")
-				print(Ind(4) + "if (m_p" + base.name + ") {")
+				print(Ind(4) + "res = pWrapped->QueryInterface(__uuidof(" + base.name + "), (void **)&m_p" + base.name + ");")
+				print(Ind(4) + "if (!res) {")
 				print(Ind(6) + "m_p" + base.name + "->Release();")
 				print(Ind(6) + "uwt[reinterpret_cast<size_t>((void*)this)] = reinterpret_cast<size_t>((void*)m_p" + base.name + ");")
 				print(Ind(6) + "wt[reinterpret_cast<size_t>((void*)m_p" + base.name + ")] = reinterpret_cast<size_t>((void*)this);")
+				#print(Ind(6) + "m_pIUnknown = (IUnknown *)m_p" + base.name + ";")
 				#print(Ind(6) + "out() << \"[MAP] \" << m_p" + base.name + " << \" -> \" << this << \"\\n\";")
 				print(Ind(4) + "}")
 
 			else:
 				print(Ind(4) + "m_p" + base.name + " = (" + base.name + "*)pWrapped;")
+		print(Ind(2) + "}")
+		#### DESTRUCTOR
+		print(Ind(2) + "~Wrapped" + TyName + "() {")
+		print(Ind(4) + "out() << \"// [DESTROY] " + TyName + "(0x\" << this << \" )\\n\";")
+		print(Ind(4) + "GLOBAL_LOCK;")
+		print(Ind(4) + "auto &uwt = getUnwrapTable();")
+		print(Ind(4) + "auto &wt = getWrapTable();")
+		print(Ind(4) + "uwt.erase(reinterpret_cast<size_t>((void*)this));")
+		for base in reversed(wrappedTypes):
+			if Ty.hasBase(ctx, "IUnknown"):
+				print(Ind(4) + "wt.erase(reinterpret_cast<size_t>((void*)m_p" + base.name + "));")
+			print(Ind(4) + "m_p" + base.name + " = nullptr;");
 		#if Ty.hasBase(ctx, "IUnknown"):
 		#	print(Ind(4) + "for (int i = 0; i < 10; i++) " + wrapName + "->AddRef();")
 		print(Ind(2) + "}")
@@ -386,6 +449,10 @@ def genWrappers(ctx):
 			print(Ind(0) + ") {")
 			#print(Ind(2) + "out() << \"" + FTy.name + "\\n\";")
 			######
+			######## RECURSION CHECK
+			print(Ind(2) + "bool recursionFlag = false;")
+			print(Ind(2) + "getRecursionFlag().compare_exchange_strong(recursionFlag, true);")
+			########
 			NumWrapped = ""
 			#if Meth.name in ["QueryInterface"]:
 				#NumWrapped = 
@@ -400,7 +467,7 @@ def genWrappers(ctx):
 					UnwrapTable[param.name] = "unwrap(" + param.name + ")"
 				else:
 					UnwrapTable[param.name] = param.name
-			########
+			
 			if FTy.retTy == "void":
 				print(Ind(2) + "" + FTy.name + "(")
 			else:
@@ -411,6 +478,15 @@ def genWrappers(ctx):
 					com = ""
 				print(Ind(4) + UnwrapTable[FTy.params[Pi].name] + com)
 			print(Ind(2) + ");")
+			######## RECURSION CHECK
+			print(Ind(2) + "if (recursionFlag)")
+			if FTy.retTy != "void":
+				print(Ind(4) + "return ret;")
+			else:
+				print(Ind(4) + "return;")
+			print(Ind(2) + "getRecursionFlag() = false;")
+			########
+
 			if FTy.name in ["D3DReflect"]:
 				print(Ind(2) + "assert(false && \"Wrap not implemented; Emit Seg Fault\");")
 			elif FTy.name in ["DXGIGetDebugInterface", "DXGIGetDebugInterface1",
@@ -428,7 +504,7 @@ def genWrappers(ctx):
 						", Wrapped" + ctx.wrapTable[RawType].name + ">(*" + FTy.params[Pi].name + ");")
 			
 			dumpCPP()
-
+			
 			if FTy.retTy != "void":
 				print(Ind(2) + "return ret;")
 			print(Ind(0) + "}")

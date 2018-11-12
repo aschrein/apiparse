@@ -16,6 +16,8 @@
 #include <fstream>
 #include <assert.h>
 #include <mutex>
+#include <atomic>
+#include <thread>
 
 static std::ofstream &out()
 {
@@ -25,10 +27,61 @@ static std::ofstream &out()
 	{
 		init = true;
 		file << "#include <cppdumputils.h>\n";
+		file << "extern HWND g_window;\n";
+		file << "#include <decls.inc>\n";
+		file << "typedef void(*Event)(void);\n";
+		file << "std::vector<std::pair<std::string, Event>> g_events = {\n";
+		file << "#include <table.inc>\n";
+		file << "};\n";
 	}
   file.setf(std::ios::unitbuf);
   return file;
 }
+
+static std::ofstream &declOut()
+{
+	static std::ofstream file("decls.inc", std::ios_base::out | std::ios_base::binary);
+	file.setf(std::ios::unitbuf);
+	return file;
+}
+
+static std::ofstream &tableOut()
+{
+	static std::ofstream file("table.inc", std::ios_base::out | std::ios_base::binary);
+	file.setf(std::ios::unitbuf);
+	return file;
+}
+
+static std::ofstream &blobOut()
+{
+	static std::ofstream file("blob", std::ios_base::out | std::ios_base::binary);
+	file.setf(std::ios::unitbuf);
+	return file;
+}
+
+static size_t &blobCounter()
+{
+	static size_t counter = 0;
+	return counter;
+}
+
+static std::vector<char> const &blobIn()
+{
+	static bool init = false;
+	static std::vector<char> blob;
+	if (!init)
+	{
+		std::ifstream file("blob", std::ios_base::in | std::ios_base::binary | std::ios::ate);
+		assert(file.is_open());
+		std::streamsize size = file.tellg();
+		file.seekg(0, std::ios::beg);
+
+		blob = std::vector<char>(size);
+		assert(file.read(blob.data(), size));
+	}
+	return blob;
+}
+
 std::mutex &getGlobalLock()
 {
   static std::mutex m;
@@ -36,6 +89,14 @@ std::mutex &getGlobalLock()
 }
 
 #define GLOBAL_LOCK std::lock_guard<std::mutex> GLOBAL_LOCK_VAR(getGlobalLock())
+
+std::atomic<bool> &getRecursionFlag(std::thread::id tid = std::this_thread::get_id())
+{
+	static std::unordered_map<std::thread::id, std::atomic<bool>> m;
+	// could this be a race condtion? neeh
+	// when shit hits the fan this gotta be fixed
+	return m[tid];
+}
 
 static std::unordered_map<size_t, size_t> &getWrapTable()
 {
@@ -50,18 +111,27 @@ static std::unordered_map<size_t, size_t> &getUnwrapTable()
 template<typename T, typename WT>
 T *getWrapper(T *t)
 {
+	bool expectedRecursionFlag = false;
+	if (getRecursionFlag())
+	{
+		out() << "// getWrapper() recursion escape\n";
+		return t;
+	}
   GLOBAL_LOCK;
   auto &wt = getWrapTable();
   auto fd = wt.find(reinterpret_cast<size_t>((void*)t));
   if (fd == wt.end()) {
+		out() << "// getWrapper() table miss\n";
     auto *wrap = new WT(t);
     return reinterpret_cast<T*>(wrap);
   }
   else
   {
+		out() << "// getWrapper() table hit\n";
     return reinterpret_cast<T*>((*fd).second);
   }
 }
+
 template<typename T>
 T *unwrap(T *t)
 {
@@ -117,6 +187,7 @@ static std::unordered_map<size_t, size_t> &getInterfaceTable()
 
 template<typename T> T *getInterface(size_t index)
 {
+	assert(getInterfaceTable().find(index) != getInterfaceTable().end());
 	return (T*)getInterfaceTable().find(index)->second;
 }
 
@@ -138,11 +209,10 @@ size_t serializePtr(T const *v)
 	{
 		return 0u;
 	}
-  auto &blob = getBlob();
-  size_t offset = blob.size();
-  blob.resize(blob.size() + sizeof(*v));
-  //memcpy(&blob[offset], v, sizeof(*v));
-  return offset;
+	size_t offset = blobCounter();
+	blobCounter() += sizeof(*v);
+	blobOut().write((char*)v, sizeof(*v));
+	return offset;
 }
 
 static size_t serializePtr(void const *v, size_t size)
@@ -151,20 +221,18 @@ static size_t serializePtr(void const *v, size_t size)
 	{
 		return 0u;
 	}
-	auto &blob = getBlob();
-	size_t offset = blob.size();
-	blob.resize(blob.size() + size);
-	//memcpy(&blob[offset], v, size);
+	size_t offset = blobCounter();
+	blobCounter() += size;
+	blobOut().write((char*)v, size);
 	return offset;
 }
 
 template<typename T>
 size_t serializeRef(T const &v)
 {
-	auto &blob = getBlob();
-	size_t offset = blob.size();
-	blob.resize(blob.size() + sizeof(v));
-	//memcpy(&blob[offset], &v, sizeof(v));
+	size_t offset = blobCounter();
+	blobCounter() += sizeof(v);
+	blobOut().write((char*)&v, sizeof(v));
 	return offset;
 }
 
@@ -175,14 +243,14 @@ T *getInBlobPtr(size_t offset)
 	{
 		return nullptr;
 	}
-  auto &blob = getBlob();
+  auto &blob = blobIn();
   return (T *)&blob[offset];
 }
 
 template<typename T>
 T const &getInBlobRef(size_t offset)
 {
-	auto &blob = getBlob();
+	auto &blob = blobIn();
 	return *(T const *)&blob[offset];
 }
 
@@ -285,7 +353,7 @@ void printParamInit(std::stringstream &ss, Method const &method,
 	std::unordered_map<std::string, void *> const &paramValues, std::string paramName)
 {
 	auto const &param = method.params.find(paramName)->second;
-#if 1 || DEBUG
+#if 0
 	if (param.annot != ParamAnnot::_IN_)
 		return;
 #endif
@@ -293,7 +361,7 @@ void printParamInit(std::stringstream &ss, Method const &method,
 	if (param.annot == ParamAnnot::_IN_)
 	{
 #if 1
-#if 0
+#if 1
 		if (param.undertype == "D3D11_SUBRESOURCE_DATA")
 		{
 			if (method.name == "CreateBuffer")
@@ -325,7 +393,7 @@ void printParamInit(std::stringstream &ss, Method const &method,
 #endif
 		if (param.ptrs == 0)
 		{
-#if 0
+#if 1
 			if (param.undertype == "UINT")
 			{
 				ss << __INDENT__ << param.type << " tmp_" << param.name << " = " << *(UINT*)pData << ";\n";
@@ -333,7 +401,7 @@ void printParamInit(std::stringstream &ss, Method const &method,
 			}
 			else if (param.undertype == "HWND")
 			{
-				ss << __INDENT__ << param.type << " tmp_" << param.name << " = " << *(HWND*)pData << ";\n";
+				ss << __INDENT__ << param.type << " tmp_" << param.name << " = g_window;//(HWND)0x" << *(HWND*)pData << ";\n";
 				return;
 			}
 			else if (param.undertype == "GUID" || param.undertype == "IID")
@@ -361,7 +429,7 @@ void printParamInit(std::stringstream &ss, Method const &method,
 		}
 		else
 #endif
-#if 0
+#if 1
 			if (param.ptrs == 1)
 		{
 			if (*(void**)pData)
@@ -466,13 +534,14 @@ void printParamInit(std::stringstream &ss, Method const &method,
 				size_t hndl = serializePtr(pSubres, num * sizeof(*pSubres));
 				ss << __INDENT__ << param.undertype << " *tmp_" << param.name
 					<< " = getInBlobPtr<" << param.undertype << ">(" << hndl << ");\n";
+				assert(desc->ArraySize * desc->MipLevels);
 				//ss << __INDENT__ << "for (int i = 0; i < tmp_pDesc->ArraySize * tmp_pDesc->MipLevels; i++)\n";
 				for (int i = 0; i < desc->ArraySize; i++)
 				{
 					for (int j = 0; j < desc->MipLevels; j++)
 					{
 						int subresId = i * desc->MipLevels + j;
-						size_t memhndl = serializePtr(pSubres[i].pSysMem, desc->Height * pSubres[i].SysMemPitch / (1u << j));
+						size_t memhndl = serializePtr(pSubres[subresId].pSysMem, pSubres[subresId].SysMemSlicePitch / (1u << (2u*j)));
 						ss << __INDENT__ << "tmp_" << param.name
 							<< "[" << subresId << "].pSysMem = getInBlobPtr<void>(" << memhndl << ");\n";
 					}
@@ -566,22 +635,21 @@ void printParamInit(std::stringstream &ss, Method const &method,
 		else if (param.ptrs == 1)
 		{
 			//assert(false && "unsopported");
-			ss << __INDENT__ << param.type << " tmp_" << param.name << " = nullptr;\n";
+			ss << __INDENT__ << param.undertype << " tmp_" << param.name << ";\n";
 		}
 		else if (param.ptrs == 2)
 		{
-			ss << __INDENT__ << param.type << " tmp_" << param.name << " = nullptr;\n";
+			ss << __INDENT__ << param.undertype << " *tmp_" << param.name << " = nullptr;\n";
 		}
 	}
 	else if (param.annot == ParamAnnot::_OUT_ARRAY_)
 	{
-		ss << __INDENT__ << param.type << " tmp_" << param.name
-			<< " = nullptr;\n";
+		ss << __INDENT__ << param.undertype << " *tmp_" << param.name
+			<< "[0x80] = {};\n";
 	}
 	else if (param.annot == ParamAnnot::_INOUT_ARRAY_)
 	{
-		ss << __INDENT__ << param.type << " tmp_" << param.name
-			<< " = nullptr;\n";
+		assert(false && "unsopported");
 	}
 	/*
 	if (param.annot == ParamAnnot::_IN_)
@@ -621,7 +689,27 @@ void printParamInit(std::stringstream &ss, Method const &method,
 
 void printParam(std::stringstream &ss, Param const &param, void *pData)
 {
-	ss << __INDENT__ << " tmp_" << param.name;
+	if (param.ptrs == 2)
+	{
+		if (param.annot == ParamAnnot::_INOUT_ARRAY_
+			|| param.annot == ParamAnnot::_IN_ARRAY_
+			)
+			ss << __INDENT__ << " tmp_" << param.name;
+		else
+			ss << __INDENT__ << " &tmp_" << param.name;
+	}
+	else if (param.ptrs == 1)
+	{
+		if (param.annot == ParamAnnot::_OUT_)
+			ss << __INDENT__ << " &tmp_" << param.name;
+		else
+			ss << __INDENT__ << " tmp_" << param.name;
+	}
+	 else
+	{
+		ss << __INDENT__ << " tmp_" << param.name;
+	}
+	
 }
 
 void printParamFinale(std::stringstream &ss, Method const &method,
@@ -640,15 +728,14 @@ void printParamFinale(std::stringstream &ss, Method const &method,
 	}
 	else if (param.annot == ParamAnnot::_OUT_)
 	{
-		if (param.name == "ppSurface" && method.name == "GetBuffer"
-			|| param.name == "ppvObject" && method.name == "QueryInterface")
+		if (param.undertype == "void" && param.ptrs ==2)
 		{
 			if (!*(void***)pData)
 			{
 				ss << __INDENT__ << "// " << param.name << " was nullptr\n";
 				return;
 			}
-			ss << __INDENT__ << "setInterface(0x" << **(void***)pData << ", *tmp_" << param.name << ");\n";
+			ss << __INDENT__ << "setInterface(0x" << **(void***)pData << ", tmp_" << param.name << ");\n";
 			return;
 		}
 		// we don't care about non interfaces being returned
@@ -658,7 +745,7 @@ void printParamFinale(std::stringstream &ss, Method const &method,
 		}
 		assert(param.ptrs == 2);
 		assert(param.isInterface);
-		ss << __INDENT__ << "setInterface(0x" << *(void**)pData << ", *tmp_" << param.name << ");\n";
+		ss << __INDENT__ << "setInterface(0x" << **(void***)pData << ", tmp_" << param.name << ");\n";
 	}
 	else if (param.annot == ParamAnnot::_OUT_ARRAY_)
 	{
@@ -727,8 +814,11 @@ void dumpMethodEvent(
 	Method const &method = miter->second;
 
 	std::stringstream ss;
-	ss << "static void " << method.name << "_" << getEventNumber() << "() {\n";
+	std::string funcName = method.name + "_" + std::to_string(getEventNumber());
+	
+	ss << "static void " << funcName << "() {\n";
 	assert(method.params.size() == paramValues.size());
+#if 1
 	for (auto const &item : paramValues)
 	{
 		assert(item.second && "pointer to the argument mustn't be null!");
@@ -736,6 +826,7 @@ void dumpMethodEvent(
 		assert(iter != method.params.end());
 		printParamInit(ss, method, paramValues, item.first);
 	}
+#endif
 	ss << __INDENT__ << "getInterface<" << obj.name <<">(0x" << pThis << ")->" << method.name << "(\n";
 	int i = 0;
 	for (auto const &paramName : method.paramsOrdered)
@@ -753,7 +844,7 @@ void dumpMethodEvent(
 		i++;
 	}
 	ss << __INDENT__ << ");\n";
-#if 0 && DEBUG
+#if 1
 	for (auto const &item : paramValues)
 	{
 		auto iter = method.params.find(item.first);
@@ -770,6 +861,8 @@ void dumpMethodEvent(
 
 	//out() << "  " << "setInterface(" << *ppSurface << ", &tmp_ppSurface" << ");\n";
 	ss << "}\n";
+	tableOut() << "{\"" << funcName << "\", " << funcName << "},\n";
+	declOut() << "static void " << funcName << "();\n";
 	out() << ss.str();
 }
 
@@ -787,7 +880,9 @@ void dumpFunctionEvent(
 	Method const &method = miter->second;
 
 	std::stringstream ss;
-	ss << "static void " << method.name << "_" << getEventNumber() << "() {\n";
+	std::string funcName = method.name + "_" + std::to_string(getEventNumber());
+	
+	ss << "static void " << funcName << "() {\n";
 	assert(method.params.size() == paramValues.size());
 	for (auto const &item : paramValues)
 	{
@@ -820,5 +915,7 @@ void dumpFunctionEvent(
 		printParamFinale(ss, method, paramValues, item.first);
 	}
 	ss << "}\n";
+	tableOut() << "{\"" << funcName << "\", " << funcName << "},\n";
+	declOut() << "static void " << funcName << "();\n";
 	out() << ss.str();
 }

@@ -69,6 +69,7 @@ install(TARGETS apiparse DESTINATION bin)
 install(TARGETS example DESTINATION bin)
 target_include_directories(example PUBLIC
 	${CMAKE_CURRENT_SOURCE_DIR}
+	${CMAKE_CURRENT_BINARY_DIR}
 )
 configure_file(include_d3d11.cpp ${CMAKE_CURRENT_BINARY_DIR}/include_d3d11.cpp COPYONLY)
 configure_file(apiutil.py ${CMAKE_CURRENT_BINARY_DIR}/apiutil.py COPYONLY)
@@ -163,11 +164,11 @@ install (TARGETS injector RUNTIME DESTINATION bin)
 ##################################
 ##################################
 ##################################
-add_library (d3d11shim MODULE
-    d3d11shim.cpp
-)
+# add_library (d3d11shim MODULE
+    # d3d11shim.cpp
+# )
 # link with vcruntimed.lib and ucrtd.lib
-set_target_properties (d3d11shim PROPERTIES LINK_FLAGS "/ENTRY:DllMainStartup")
+#set_target_properties (d3d11shim PROPERTIES LINK_FLAGS "/ENTRY:DllMainStartup")
 # target_link_libraries (d3d11shim
 	# vcruntime
     # vcruntimed

@@ -245,6 +245,7 @@ main(int argc, char *argv[])
    
 
     HANDLE hSemaphore = NULL;
+#if 0
     if (!USE_SHARED_MEM) {
         SetEnvironmentVariableA("INJECT_DLL", szDll);
     } else {
@@ -285,7 +286,7 @@ main(int argc, char *argv[])
         strncpy(pSharedMem->szDllName, szDll, _countof(pSharedMem->szDllName) - 1);
         pSharedMem->szDllName[_countof(pSharedMem->szDllName) - 1] = '\0';
     }
-
+#endif
     BOOL bAttachDwm = FALSE;
     PROCESS_INFORMATION processInfo;
     HANDLE hProcess;
