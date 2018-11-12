@@ -44,9 +44,13 @@ def writeCPP(ctx, Ty, base, Meth):
 
 def dumpMethod(ctx, Ty, base, Meth, declOnly):
 	def dumpCPP():
-		print(Ind(2) + "dumpMethodEvent((void*)this, \"" + base.name + "\", \"" + Meth.name + "\", {")
+		if Meth.retTy == "void":
+			print(Ind(2) + "dumpMethodEvent((void*)this, \"" + base.name + "\", \"" + Meth.name + "\", nullptr, {")
+		else:
+			print(Ind(2) + "dumpMethodEvent((void*)this, \"" + base.name + "\", \"" + Meth.name + "\", &ret, {")
+		
 		for param in Meth.params:
-			print(Ind(4) + "{\"" + param.name + "\", (void*)&" + param.name + "},")
+			print(Ind(4) + "{\"" + param.name + "\", {(void*)&orig_" + param.name + ", (void*)&" + param.name + "}},")
 		print(Ind(2) + "});")
 
 	PN = len(Meth.params)
@@ -144,6 +148,9 @@ def dumpMethod(ctx, Ty, base, Meth, declOnly):
 				#NumWrapped = 
 			# for scalar, ptr and array types there is different unwrap code
 			UnwrapTable = {}
+			for param in Meth.params:
+				print(Ind(2) + "auto orig_" + param.name + " = "+ param.name + ";")
+
 			for param in Meth.params:
 
 				if countPtrs(param.type) == 2 and param.annot in ["IN_ARRAY", "INOUT_ARRAY"]:
@@ -446,9 +453,12 @@ def genWrappers(ctx):
 		
 	for FName, FTy in ctx.apiFuncs.items():
 		def dumpCPP():
-			print(Ind(2) + "dumpFunctionEvent(\"" + FTy.name + "\", {")
+			if FTy.retTy == "void":
+				print(Ind(2) + "dumpFunctionEvent(\"" + FTy.name + "\", nullptr, {")
+			else:
+				print(Ind(2) + "dumpFunctionEvent(\"" + FTy.name + "\", &ret, {")
 			for param in FTy.params:
-				print(Ind(4) + "{\"" + param.name + "\", (void*)&" + param.name + "},")
+				print(Ind(4) + "{\"" + param.name + "\", {(void*)&orig_" + param.name + ", (void*)&" + param.name + "}},")
 			print(Ind(2) + "});")
 		PN = len(FTy.params)
 		if PN == 0:
@@ -475,6 +485,9 @@ def genWrappers(ctx):
 				#NumWrapped = 
 			# for scalar, ptr and array types there is different unwrap code
 			UnwrapTable = {}
+			for param in FTy.params:
+				print(Ind(2) + "auto orig_" + param.name + " = "+ param.name + ";")
+
 			for param in FTy.params:
 				if countPtrs(param.type) == 2 and param.annot in ["IN_ARRAY", "INOUT_ARRAY"]:
 					print(Ind(2) + param.type.split("*")[0].replace("const", "") + " *tmp_" + param.name + "[32];")

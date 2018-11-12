@@ -351,7 +351,7 @@ static void PARAM(std::string type, std::string undertype, std::string name, Par
 #define __INDENT__ "/*" << __LINE__ << "*/"
 
 void printParamInit(std::stringstream &ss, Method const &method,
-	std::unordered_map<std::string, void *> const &paramValues, std::string paramName)
+	std::unordered_map<std::string, std::pair<void *, void *>> const &paramValues, std::string paramName)
 {
 	auto const &param = method.params.find(paramName)->second;
 #if 0
@@ -367,8 +367,8 @@ void printParamInit(std::stringstream &ss, Method const &method,
 		{
 			if (method.name == "CreateBuffer")
 			{
-				D3D11_SUBRESOURCE_DATA *pSubres = *(D3D11_SUBRESOURCE_DATA**)pData;
-				D3D11_BUFFER_DESC *desc = *(D3D11_BUFFER_DESC**)paramValues.find("pDesc")->second;
+				D3D11_SUBRESOURCE_DATA *pSubres = *(D3D11_SUBRESOURCE_DATA**)pData.first;
+				D3D11_BUFFER_DESC *desc = *(D3D11_BUFFER_DESC**)paramValues.find("pDesc")->second.first;
 				if (desc && pSubres)
 				{
 					int num = desc->ByteWidth;
@@ -397,17 +397,17 @@ void printParamInit(std::stringstream &ss, Method const &method,
 #if 1
 			if (param.undertype == "UINT")
 			{
-				ss << __INDENT__ << param.type << " tmp_" << param.name << " = " << *(UINT*)pData << ";\n";
+				ss << __INDENT__ << param.type << " tmp_" << param.name << " = " << *(UINT*)pData.first << ";\n";
 				return;
 			}
 			else if (param.undertype == "HWND")
 			{
-				ss << __INDENT__ << param.type << " tmp_" << param.name << " = g_window;//(HWND)0x" << *(HWND*)pData << ";\n";
+				ss << __INDENT__ << param.type << " tmp_" << param.name << " = g_window;//(HWND)0x" << *(HWND*)pData.first << ";\n";
 				return;
 			}
 			else if (param.undertype == "GUID" || param.undertype == "IID")
 			{
-				auto guid = *(GUID*)pData;
+				auto guid = *(GUID*)pData.first;
 				ss << __INDENT__ << param.type << " tmp_" << param.name << " = {"
 					<< guid.Data1
 					<< ", " << guid.Data2
@@ -423,7 +423,7 @@ void printParamInit(std::stringstream &ss, Method const &method,
 					<< "}};\n";
 				return;
 			}
-			size_t hndl = serializePtr(pData, param.size);
+			size_t hndl = serializePtr(pData.first, param.size);
 			ss << __INDENT__ << param.type << " tmp_" << param.name << " = getInBlobRef<" << param.undertype << ">(" << hndl << ");\n";
 			//assert(false && "unsopported");
 #endif
@@ -433,19 +433,36 @@ void printParamInit(std::stringstream &ss, Method const &method,
 #if 1
 			if (param.ptrs == 1)
 		{
-			if (*(void**)pData)
+			if (*(void**)pData.first)
 			{
 				if (param.isInterface)
 				{
 #if 1
 					ss << __INDENT__ << param.type << " tmp_" << param.name
-						<< " = getInterface<" << param.undertype << ">(0x" << *(void**)pData << ");\n";
+						<< " = getInterface<" << param.undertype << ">(0x" << *(void**)pData.first << ");\n";
 #endif
 				}
 				else
 				{
 #if 1
-					size_t hndl = serializePtr(*(void**)pData, param.undersize);
+					// It's an array although it's not an array in the spec
+					if (param.name == "pDesc" && method.name == "GetDisplayModeList")
+					{
+						auto num = *(UINT**)paramValues.find("pNumModes")->second.first;
+						if (!num || !*num)
+						{
+							ss << __INDENT__ << param.undertype << " tmp_" << param.name
+								<< " = nullptr;\n";
+							return;
+						}
+						size_t hndl = serializePtr(*(void**)pData.first, *num * param.undersize);
+						ss << __INDENT__ << param.undertype << " tmp_" << param.name << "[" << *num << "];\n";
+
+						ss << __INDENT__ << " memcpy(tmp_" << param.name << ", " <<
+							" getInBlobPtr<" << param.undertype << ">(" << hndl << "), " << *num * param.undersize << ");\n";
+						return;
+					}
+					size_t hndl = serializePtr(*(void**)pData.first, param.undersize);
 					ss << __INDENT__ << param.undertype << " tmp_" << param.name
 						<< " = *getInBlobPtr<" << param.undertype << ">(" << hndl << ");\n";
 #endif
@@ -465,7 +482,7 @@ void printParamInit(std::stringstream &ss, Method const &method,
 	{
 		assert(param.ptrs == 1);
 		// we don't care if it wasn't provided
-		if (!*(void**)pData)
+		if (!*(void**)pData.first)
 		{
 			ss << __INDENT__ << param.type << " tmp_" << param.name
 				<< " = nullptr;\n";
@@ -474,7 +491,7 @@ void printParamInit(std::stringstream &ss, Method const &method,
 		// we don't care about non interfaces either
 		if (!param.isInterface)
 		{
-			size_t hndl = serializePtr(*(void**)pData, param.undersize);
+			size_t hndl = serializePtr(*(void**)pData.first, param.undersize);
 			ss << __INDENT__ << param.undertype << " shadow_tmp_" << param.name << ";\n";
 
 			ss << __INDENT__ << param.type << " tmp_" << param.name << " = " <<
@@ -515,7 +532,7 @@ void printParamInit(std::stringstream &ss, Method const &method,
 	}
 	else if (param.annot == ParamAnnot::_IN_ARRAY_)
 	{
-		if (!*(void**)pData)
+		if (!*(void**)pData.first)
 		{
 			ss << __INDENT__ << param.type << " tmp_" << param.name
 				<< " = nullptr;\n";
@@ -527,14 +544,14 @@ void printParamInit(std::stringstream &ss, Method const &method,
 		*/
 		if (param.undertype == "D3D11_SUBRESOURCE_DATA")
 		{
-			D3D11_SUBRESOURCE_DATA *pSubres = *(D3D11_SUBRESOURCE_DATA**)pData;
+			D3D11_SUBRESOURCE_DATA *pSubres = *(D3D11_SUBRESOURCE_DATA**)pData.first;
 			if (method.name == "CreateTexture1D")
 			{
 				assert(false && "unsopported");
 			}
 			else if (method.name == "CreateTexture2D")
 			{
-				D3D11_TEXTURE2D_DESC *desc = *(D3D11_TEXTURE2D_DESC**)paramValues.find("pDesc")->second;
+				D3D11_TEXTURE2D_DESC *desc = *(D3D11_TEXTURE2D_DESC**)paramValues.find("pDesc")->second.first;
 				int num = desc->ArraySize * desc->MipLevels;
 				
 				ss << __INDENT__ << param.undertype << " tmp_" << param.name << "[" << num << "];\n";
@@ -573,7 +590,7 @@ void printParamInit(std::stringstream &ss, Method const &method,
 
 			|| numparam.undertype == "SIZE_T"
 			));
-		auto num = *(UINT*)paramValues.find(param.numparam)->second;
+		auto num = *(UINT*)paramValues.find(param.numparam)->second.first;
 		if (param.isInterface)
 		{
 			assert(param.ptrs == 2);
@@ -581,7 +598,7 @@ void printParamInit(std::stringstream &ss, Method const &method,
 			{
 				ss << __INDENT__ << param.undertype << " *tmp_" << param.name
 					<< "[] = {\n";
-				void **pArr = *(void***)pData;
+				void **pArr = *(void***)pData.first;
 				for (int i = 0; i < num; i++)
 				{
 					ss << __INDENT__ << "getInterface<" << param.undertype << ">(0x" << pArr[i] << "), \n";
@@ -597,15 +614,32 @@ void printParamInit(std::stringstream &ss, Method const &method,
 		}
 		assert(param.ptrs == 1);
 		
-		char *pBase = *(char**)pData;
+		char *pBase = *(char**)pData.first;
 		if (param.undersize)
 		{
 			if (num)
 			{
+				if (param.name == "pInputElementDescs" && method.name == "CreateInputLayout")
+				{
+					ss << __INDENT__ << param.undertype << " tmp_" << param.name << "[" << num << "];\n";
+					for (int i = 0; i < num; i++)
+					{
+						size_t hndl = serializePtr(pBase + i * param.undersize, param.undersize);
+						ss << __INDENT__ << "tmp_" << param.name << "[" << i << "] = *getInBlobPtr<" << param.undertype << ">(" << hndl << "),\n";
+					}
+					for (int i = 0; i < num; i++)
+					{
+						D3D11_INPUT_ELEMENT_DESC desc = ((D3D11_INPUT_ELEMENT_DESC*)pBase)[i];
+						size_t hndl = serializePtr(desc.SemanticName, strlen(desc.SemanticName) + 1);
+						ss << __INDENT__ << "tmp_" << param.name << "[" << i << "].SemanticName = "
+							<< "getInBlobPtr<char>(" << hndl << ");\n";
+					}
+					return;
+				}
 				ss << __INDENT__ << param.undertype << " tmp_" << param.name << "[" << num << "] = {\n";
 				for (int i = 0; i < num; i++)
 				{
-					size_t hndl = serializePtr(pBase + i * param.undersize, param.size);
+					size_t hndl = serializePtr(pBase + i * param.undersize, param.undersize);
 					ss << __INDENT__ << "getInBlobRef<" << param.undertype << ">(" << hndl << "),\n";
 				}
 				ss << "};\n";
@@ -634,7 +668,7 @@ void printParamInit(std::stringstream &ss, Method const &method,
 		{
 			assert(false && "unsopported");
 		}
-		if (!*(void**)pData)
+		if (!*(void**)pData.first)
 		{
 			ss << __INDENT__ << param.type << " tmp_" << param.name
 				<< " = nullptr;\n";
@@ -699,7 +733,7 @@ void printParamInit(std::stringstream &ss, Method const &method,
 	*/
 }
 
-void printParam(std::stringstream &ss, Param const &param, void *pData)
+void printParam(std::stringstream &ss, Method const &method, Param const &param, std::pair<void *, void *> pData)
 {
 	if (param.ptrs == 2)
 	{
@@ -723,8 +757,13 @@ void printParam(std::stringstream &ss, Param const &param, void *pData)
 				ss << __INDENT__ << " tmp_" << param.name;
 			else
 			{
-				if (*(void**)pData)
-					ss << __INDENT__ << " &tmp_" << param.name;
+				if (*(void**)pData.first)
+				{
+					if (param.name == "pDesc" && method.name == "GetDisplayModeList")
+						ss << __INDENT__ << " tmp_" << param.name;
+					else
+						ss << __INDENT__ << " &tmp_" << param.name;
+				}
 				else
 					ss << __INDENT__ << " tmp_" << param.name;
 			}
@@ -740,7 +779,7 @@ void printParam(std::stringstream &ss, Param const &param, void *pData)
 }
 
 void printParamFinale(std::stringstream &ss, Method const &method,
-	std::unordered_map<std::string, void *> const &paramValues, std::string paramName)
+	std::unordered_map<std::string, std::pair<void *, void *>> const &paramValues, std::string paramName)
 {
 	auto const &param = method.params.find(paramName)->second;
 	auto pData = paramValues.find(paramName)->second;
@@ -757,12 +796,12 @@ void printParamFinale(std::stringstream &ss, Method const &method,
 	{
 		if (param.undertype == "void" && param.ptrs ==2)
 		{
-			if (!*(void***)pData)
+			if (!*(void***)pData.second)
 			{
 				ss << __INDENT__ << "// " << param.name << " was nullptr\n";
 				return;
 			}
-			ss << __INDENT__ << "setInterface(0x" << **(void***)pData << ", tmp_" << param.name << ");\n";
+			ss << __INDENT__ << "setInterface(0x" << **(void***)pData.second << ", tmp_" << param.name << ");\n";
 			return;
 		}
 		// we don't care about non interfaces being returned
@@ -772,7 +811,7 @@ void printParamFinale(std::stringstream &ss, Method const &method,
 		}
 		assert(param.ptrs == 2);
 		assert(param.isInterface);
-		ss << __INDENT__ << "setInterface(0x" << **(void***)pData << ", tmp_" << param.name << ");\n";
+		ss << __INDENT__ << "setInterface(0x" << **(void***)pData.second << ", tmp_" << param.name << ");\n";
 	}
 	else if (param.annot == ParamAnnot::_OUT_ARRAY_)
 	{
@@ -784,7 +823,7 @@ void printParamFinale(std::stringstream &ss, Method const &method,
 		assert(param.ptrs == 2);
 		//assert(false && "unsopported");
 		// sometimes Get* methods return arrays of crap, ok let's handle this
-		if (!*(void**)pData)
+		if (!*(void**)pData.second)
 		{
 			return;
 		}
@@ -795,7 +834,7 @@ void printParamFinale(std::stringstream &ss, Method const &method,
 			numparam.undertype == "UINT"
 			|| numparam.undertype == "SIZE_T"
 		);
-		void *pNumData = paramValues.find(param.numparam)->second;
+		void *pNumData = paramValues.find(param.numparam)->second.second;
 		if (numparam.ptrs == 0)
 		{
 			num = *(UINT*)pNumData;
@@ -812,7 +851,7 @@ void printParamFinale(std::stringstream &ss, Method const &method,
 		
 		
 		//ss << __INDENT__ <<  "for (int i = 0; i < tmp_" << numparam.name << "; i++)\n";
-		void **pArr = *(void***)pData;
+		void **pArr = *(void***)pData.second;
 		for (int i = 0; i < num; i++)
 		{
 			ss << __INDENT__ << "setInterface(0x" << pArr[0] << ", tmp_" << param.name << "[" << i << "]);\n";
@@ -829,7 +868,8 @@ void dumpMethodEvent(
 	void *pThis,
 	std::string objName,
 	std::string methName,
-	std::unordered_map<std::string, void *> const &paramValues
+	void *pRet,
+	std::unordered_map<std::string, std::pair<void *, void *>> const &paramValues
 ) {
 	GLOBAL_LOCK;
 	auto &g_classTable = getGlobalObjTable();
@@ -848,18 +888,22 @@ void dumpMethodEvent(
 #if 1
 	for (auto const &item : paramValues)
 	{
-		assert(item.second && "pointer to the argument mustn't be null!");
+		//assert(item.second && "pointer to the argument mustn't be null!");
 		auto iter = method.params.find(item.first);
 		assert(iter != method.params.end());
 		printParamInit(ss, method, paramValues, item.first);
 	}
 #endif
-	ss << __INDENT__ << "getInterface<" << obj.name <<">(0x" << pThis << ")->" << method.name << "(\n";
+	if (method.retTy != "void")
+		ss << __INDENT__ << "auto ret = getInterface<" << obj.name << ">(0x" << pThis << ")->" << method.name << "(\n";
+	else
+		ss << __INDENT__ << "getInterface<" << obj.name << ">(0x" << pThis << ")->" << method.name << "(\n";
+	
 	int i = 0;
 	for (auto const &paramName : method.paramsOrdered)
 	{
 		auto iter = method.params.find(paramName);
-		printParam(ss, iter->second, paramValues.find(paramName)->second);
+		printParam(ss, method, iter->second, paramValues.find(paramName)->second);
 		if (i == method.params.size() - 1)
 		{
 			ss << "\n";
@@ -871,6 +915,19 @@ void dumpMethodEvent(
 		i++;
 	}
 	ss << __INDENT__ << ");\n";
+	if (method.retTy != "void")
+	{
+		if (method.retTy == "HRESULT")
+		{
+			HRESULT cur = *(HRESULT*)pRet;
+			ss << __INDENT__ << "assert(ret == " << cur << ");\n";
+		}
+		else if (method.retTy == "ULONG")
+		{
+			ULONG cur = *(ULONG*)pRet;
+			ss << __INDENT__ << "assert(ret == " << cur << ");\n";
+		}
+	}
 #if 1
 	for (auto const &item : paramValues)
 	{
@@ -895,7 +952,8 @@ void dumpMethodEvent(
 
 void dumpFunctionEvent(
 	std::string methName,
-	std::unordered_map<std::string, void *> const &paramValues
+	void *pRet,
+	std::unordered_map<std::string, std::pair<void *, void *>> const &paramValues
 ) {
 	GLOBAL_LOCK;
 	auto &g_classTable = getGlobalObjTable();
@@ -913,17 +971,21 @@ void dumpFunctionEvent(
 	assert(method.params.size() == paramValues.size());
 	for (auto const &item : paramValues)
 	{
-		assert(item.second && "pointer to the argument mustn't be null!");
+		//assert(item.second && "pointer to the argument mustn't be null!");
 		auto iter = method.params.find(item.first);
 		assert(iter != method.params.end());
 		printParamInit(ss, method, paramValues, item.first);
 	}
-	ss << __INDENT__ << method.name << "(\n";
+	if (method.retTy != "void")
+		ss << __INDENT__ << "auto ret = " << method.name << "(\n";
+	else
+		ss << __INDENT__ << "" << method.name << "(\n";
+
 	int i = 0;
 	for (auto const &paramName : method.paramsOrdered)
 	{
 		auto iter = method.params.find(paramName);
-		printParam(ss, iter->second, paramValues.find(paramName)->second);
+		printParam(ss, method, iter->second, paramValues.find(paramName)->second);
 		if (i == method.params.size() - 1)
 		{
 			ss << "\n";
@@ -935,6 +997,19 @@ void dumpFunctionEvent(
 		i++;
 	}
 	ss << __INDENT__ << ");\n";
+	if (method.retTy != "void")
+	{
+		if (method.retTy == "HRESULT")
+		{
+			HRESULT cur = *(HRESULT*)pRet;
+			ss << __INDENT__ << "assert(ret == " << cur << ");\n";
+		}
+		else if (method.retTy == "ULONG")
+		{
+			ULONG cur = *(ULONG*)pRet;
+			ss << __INDENT__ << "assert(ret == " << cur << ");\n";
+		}
+	}
 	for (auto const &item : paramValues)
 	{
 		auto iter = method.params.find(item.first);
