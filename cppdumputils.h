@@ -78,6 +78,7 @@ static std::vector<char> const &blobIn()
 
 		blob = std::vector<char>(size);
 		assert(file.read(blob.data(), size));
+		init = true;
 	}
 	return blob;
 }
@@ -237,7 +238,7 @@ size_t serializeRef(T const &v)
 }
 
 template<typename T>
-T *getInBlobPtr(size_t offset)
+T const *getInBlobPtr(size_t offset)
 {
 	if (!offset)
 	{
@@ -372,11 +373,11 @@ void printParamInit(std::stringstream &ss, Method const &method,
 				{
 					int num = desc->ByteWidth;
 					size_t hndl = serializePtr(pSubres, sizeof(*pSubres));
-					ss << __INDENT__ << param.undertype << " *tmp_" << param.name
-						<< " = getInBlobPtr<" << param.undertype << ">(" << hndl << ");\n";
+					ss << __INDENT__ << param.undertype << " tmp_" << param.name
+						<< " = *getInBlobPtr<" << param.undertype << ">(" << hndl << ");\n";
 					size_t memhndl = serializePtr(pSubres->pSysMem, num);
 					ss << __INDENT__ << "tmp_" << param.name
-						<< "->pSysMem = getInBlobPtr<void>(" << memhndl << ");\n";
+						<< ".pSysMem = getInBlobPtr<void>(" << memhndl << ");\n";
 				}
 				else
 				{
@@ -444,9 +445,9 @@ void printParamInit(std::stringstream &ss, Method const &method,
 				else
 				{
 #if 1
-					size_t hndl = serializePtr(*(void**)pData, param.size);
-					ss << __INDENT__ << param.type << " tmp_" << param.name
-						<< " = getInBlobPtr<" << param.undertype << ">(" << hndl << ");\n";
+					size_t hndl = serializePtr(*(void**)pData, param.undersize);
+					ss << __INDENT__ << param.undertype << " tmp_" << param.name
+						<< " = *getInBlobPtr<" << param.undertype << ">(" << hndl << ");\n";
 #endif
 				}
 			}
@@ -474,8 +475,12 @@ void printParamInit(std::stringstream &ss, Method const &method,
 		if (!param.isInterface)
 		{
 			size_t hndl = serializePtr(*(void**)pData, param.undersize);
-			ss << __INDENT__ << param.type << " tmp_" << param.name
-				<< " = getInBlobPtr<" << param.undertype << ">(" << hndl << ");\n";
+			ss << __INDENT__ << param.undertype << " shadow_tmp_" << param.name << ";\n";
+
+			ss << __INDENT__ << param.type << " tmp_" << param.name << " = " <<
+				" &shadow_tmp_" << param.name << ";\n";
+			ss << __INDENT__ << " memcpy(tmp_" << param.name << ", " <<
+				" getInBlobPtr<" << param.undertype << ">(" << hndl << "));\n";
 			return;
 		}
 		assert(false && "unsopported");
@@ -611,8 +616,12 @@ void printParamInit(std::stringstream &ss, Method const &method,
 		else
 		{
 			assert(param.undertype == "void");
-			size_t hndl = serializePtr(pBase, param.size);
-			ss << __INDENT__ << param.undertype << " *tmp_" << param.name << " = getInBlobPtr<void>(" << hndl << ");\n";
+			size_t hndl = serializePtr(pBase, num);
+			ss << __INDENT__ << "char shadow_tmp_" << param.name << "[" << num << "];\n";
+			ss << __INDENT__ << param.type << " tmp_" << param.name << " = " <<
+				" (void*)shadow_tmp_" << param.name << ";\n";
+			ss << __INDENT__ << " memcpy(shadow_tmp_" << param.name << ", " <<
+				" getInBlobPtr<" << param.undertype << ">(" << hndl << "), " << num  << ");\n";
 		}
 		//assert(false && "unsopported");
 	}
@@ -700,10 +709,7 @@ void printParam(std::stringstream &ss, Param const &param, void *pData)
 	}
 	else if (param.ptrs == 1)
 	{
-		if (param.annot == ParamAnnot::_OUT_)
-			ss << __INDENT__ << " &tmp_" << param.name;
-		else
-			ss << __INDENT__ << " tmp_" << param.name;
+		ss << __INDENT__ << " &tmp_" << param.name;
 	}
 	 else
 	{
