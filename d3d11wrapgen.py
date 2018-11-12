@@ -63,20 +63,35 @@ def dumpMethod(ctx, Ty, base, Meth, declOnly):
 			print(Ind(2) + "getRecursionFlag().compare_exchange_strong(recursionFlag, true);")
 			########
 			if Meth.retTy != "void":
-				print(Ind(2) + "auto ret = " + wrapName + "->" + Meth.name + "();")
+				
 				#print(Ind(2) + "out() << \"\\treturned \" << ret << \"\\n\";")
 
 				##### special case for Release()
-				if Meth.name == "Release":
+				if Meth.name == "AddRef":
+					print(Ind(2) + "assert(" + "m_pMain);")
+					print(Ind(2) + "auto ret = " + "m_pMain->" + Meth.name + "();")
+					
+					print(Ind(2) + "if (recursionFlag) {")
+					print(Ind(4) + "return ret;")
+					print(Ind(2) + "}")
+					print(Ind(2) + "getRecursionFlag() = false;")
+					print(Ind(2) + "out() << \"// returned \" << ret << \"\\n\";")
+					dumpCPP()
+					print(Ind(2) + "return ret;")
+				elif Meth.name == "Release":
+					print(Ind(2) + "assert(" + "m_pMain);")
+					print(Ind(2) + "auto ret = " + "m_pMain->" + Meth.name + "();")
 					print(Ind(2) + "if (recursionFlag) {")
 					print(Ind(4) + "if (!ret) delete this;")
 					print(Ind(4) + "return ret;")
 					print(Ind(2) + "}")
 					print(Ind(2) + "getRecursionFlag() = false;")
+					print(Ind(2) + "out() << \"// returned \" << ret << \"\\n\";")
 					dumpCPP()
 					print(Ind(2) + "if (!ret) delete this;")
 					print(Ind(2) + "return ret;")
 				else:
+					print(Ind(2) + "auto ret = " + wrapName + "->" + Meth.name + "();")
 					######## RECURSION CHECK
 					print(Ind(2) + "if (recursionFlag)")
 					if Meth.retTy != "void":
@@ -364,6 +379,8 @@ def genWrappers(ctx):
 		wrappedTypes = [Ty] + Ty.getBases(ctx, [])
 		for base in wrappedTypes:
 			print(Ind(2) + base.name + " *m_p" + base.name + ";")
+		if Ty.hasBase(ctx, "IUnknown"):
+			print(Ind(2) + "IUnknown *m_pMain;")
 		print("public:")
 		#### CONSTRUCTOR
 		print(Ind(2) + "template<typename T>")
@@ -383,7 +400,7 @@ def genWrappers(ctx):
 				print(Ind(6) + "m_p" + base.name + "->Release();")
 				print(Ind(6) + "uwt[reinterpret_cast<size_t>((void*)this)] = reinterpret_cast<size_t>((void*)m_p" + base.name + ");")
 				print(Ind(6) + "wt[reinterpret_cast<size_t>((void*)m_p" + base.name + ")] = reinterpret_cast<size_t>((void*)this);")
-				#print(Ind(6) + "m_pIUnknown = (IUnknown *)m_p" + base.name + ";")
+				print(Ind(6) + "m_pMain = (IUnknown *)m_p" + base.name + ";")
 				#print(Ind(6) + "out() << \"[MAP] \" << m_p" + base.name + " << \" -> \" << this << \"\\n\";")
 				print(Ind(4) + "}")
 

@@ -480,7 +480,7 @@ void printParamInit(std::stringstream &ss, Method const &method,
 			ss << __INDENT__ << param.type << " tmp_" << param.name << " = " <<
 				" &shadow_tmp_" << param.name << ";\n";
 			ss << __INDENT__ << " memcpy(tmp_" << param.name << ", " <<
-				" getInBlobPtr<" << param.undertype << ">(" << hndl << "));\n";
+				" getInBlobPtr<" << param.undertype << ">(" << hndl << "), " << param.undersize << ");\n";
 			return;
 		}
 		assert(false && "unsopported");
@@ -536,9 +536,9 @@ void printParamInit(std::stringstream &ss, Method const &method,
 			{
 				D3D11_TEXTURE2D_DESC *desc = *(D3D11_TEXTURE2D_DESC**)paramValues.find("pDesc")->second;
 				int num = desc->ArraySize * desc->MipLevels;
-				size_t hndl = serializePtr(pSubres, num * sizeof(*pSubres));
-				ss << __INDENT__ << param.undertype << " *tmp_" << param.name
-					<< " = getInBlobPtr<" << param.undertype << ">(" << hndl << ");\n";
+				
+				ss << __INDENT__ << param.undertype << " tmp_" << param.name << "[" << num << "];\n";
+					
 				assert(desc->ArraySize * desc->MipLevels);
 				//ss << __INDENT__ << "for (int i = 0; i < tmp_pDesc->ArraySize * tmp_pDesc->MipLevels; i++)\n";
 				for (int i = 0; i < desc->ArraySize; i++)
@@ -547,6 +547,9 @@ void printParamInit(std::stringstream &ss, Method const &method,
 					{
 						int subresId = i * desc->MipLevels + j;
 						size_t memhndl = serializePtr(pSubres[subresId].pSysMem, pSubres[subresId].SysMemSlicePitch / (1u << (2u*j)));
+						size_t hndl = serializePtr(&pSubres[subresId], sizeof(*pSubres));
+						ss << __INDENT__ << "tmp_" << param.name
+							<< "[" << subresId << "]" << " = *getInBlobPtr<" << param.undertype << ">(" << hndl << ");\n";
 						ss << __INDENT__ << "tmp_" << param.name
 							<< "[" << subresId << "].pSysMem = getInBlobPtr<void>(" << memhndl << ");\n";
 					}
@@ -709,7 +712,25 @@ void printParam(std::stringstream &ss, Param const &param, void *pData)
 	}
 	else if (param.ptrs == 1)
 	{
-		ss << __INDENT__ << " &tmp_" << param.name;
+		if (param.isInterface)
+			ss << __INDENT__ << " tmp_" << param.name;
+		else
+		{
+			if (
+				param.annot == ParamAnnot::_IN_ARRAY_
+				|| param.annot == ParamAnnot::_INOUT_
+				)
+				ss << __INDENT__ << " tmp_" << param.name;
+			else
+			{
+				if (*(void**)pData)
+					ss << __INDENT__ << " &tmp_" << param.name;
+				else
+					ss << __INDENT__ << " tmp_" << param.name;
+			}
+				
+		}
+			
 	}
 	 else
 	{
