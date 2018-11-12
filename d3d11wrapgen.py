@@ -43,6 +43,12 @@ def writeCPP(ctx, Ty, base, Meth):
 """
 
 def dumpMethod(ctx, Ty, base, Meth, declOnly):
+	def dumpCPP():
+		print(Ind(2) + "dumpMethodEvent((void*)this, \"" + base.name + "\", \"" + Meth.name + "\", {")
+		for param in Meth.params:
+			print(Ind(4) + "{\"" + param.name + "\", (void*)&" + param.name + "},")
+		print(Ind(2) + "});")
+
 	PN = len(Meth.params)
 	wrapName = "m_p" + base.name
 	if PN == 0:
@@ -57,7 +63,7 @@ def dumpMethod(ctx, Ty, base, Meth, declOnly):
 				print(Ind(2) + "return ret;")
 			else:
 				print(Ind(2) + "return " + wrapName + "->" + Meth.name + "();")
-
+			dumpCPP()
 			print(Ind(0) + "}")
 	else:
 		if declOnly:
@@ -203,10 +209,7 @@ def dumpMethod(ctx, Ty, base, Meth, declOnly):
 						", Wrapped" + RawType + ">(*" + Meth.params[Pi].name + ");")
 						"""
 
-			print(Ind(2) + "dumpMethodEvent((void*)this, \"" + base.name + "\", \"" + Meth.name + "\", {")
-			for param in Meth.params:
-				print(Ind(4) + "{\"" + param.name + "\", (void*)&" + param.name + "},")
-			print(Ind(2) + "});")
+			dumpCPP()
 
 			if Meth.retTy != "void":
 				print(Ind(2) + "return ret;")
@@ -259,6 +262,28 @@ def genInterfaceTableInit(ctx):
 				");")
 			print(Ind(4) + "METHOD_END(\"" + Meth.retTy + "\", \"" + Meth.name + "\");")
 		print(Ind(4) + "CLASS_END(\"" + Ty.name + "\");")
+
+	print(Ind(4) + "CLASS_BEGIN(\"GLOBAL\");")
+	for FName, FTy in ctx.apiFuncs.items():
+		print(Ind(4) + "METHOD_BEGIN(\"" + FTy.retTy + "\", \"" + FTy.name + "\");")
+		for param in FTy.params:
+			isInterface = "true"
+			if not param.undertype in ctx.apiTypes:
+				isInterface = "false"
+			undersize = "sizeof(" + param.undertype + ")"
+			if param.undertype == "void":
+				undersize = "0"
+			print(Ind(4) + "PARAM(\"" + param.type + "\", \"" + param.undertype +
+			"\", \"" + param.name +
+			"\", ParamAnnot::_" + param.annot + "_" +
+			", " + str(param.ptrsNum) +
+			", " + isInterface +
+			", sizeof(" + param.type + ")" +
+			", " + undersize + "" +
+			", \"" + param.number + "\"" +
+			");")
+		print(Ind(4) + "METHOD_END(\"" + FTy.retTy + "\", \"" + FTy.name + "\");")
+	print(Ind(4) + "CLASS_END(\"GLOBAL\");")
 	print(Ind(2) + "}")
 	print("} g_tableInit;")
 
@@ -340,6 +365,11 @@ def genWrappers(ctx):
 		
 		
 	for FName, FTy in ctx.apiFuncs.items():
+		def dumpCPP():
+			print(Ind(2) + "dumpFunctionEvent(\"" + FTy.name + "\", {")
+			for param in FTy.params:
+				print(Ind(4) + "{\"" + param.name + "\", (void*)&" + param.name + "},")
+			print(Ind(2) + "});")
 		PN = len(FTy.params)
 		if PN == 0:
 			print(Ind(0) + FTy.retTy + " Wrapped" + FTy.name + "() {")
@@ -397,6 +427,8 @@ def genWrappers(ctx):
 						print(Ind(4) + "*" + FTy.params[Pi].name + " = getWrapper<" + RawType +
 						", Wrapped" + ctx.wrapTable[RawType].name + ">(*" + FTy.params[Pi].name + ");")
 			
+			dumpCPP()
+
 			if FTy.retTy != "void":
 				print(Ind(2) + "return ret;")
 			print(Ind(0) + "}")

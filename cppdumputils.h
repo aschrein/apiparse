@@ -141,7 +141,7 @@ size_t serializePtr(T const *v)
   auto &blob = getBlob();
   size_t offset = blob.size();
   blob.resize(blob.size() + sizeof(*v));
-  memcpy(&blob[offset], v, sizeof(*v));
+  //memcpy(&blob[offset], v, sizeof(*v));
   return offset;
 }
 
@@ -154,7 +154,7 @@ static size_t serializePtr(void const *v, size_t size)
 	auto &blob = getBlob();
 	size_t offset = blob.size();
 	blob.resize(blob.size() + size);
-	memcpy(&blob[offset], v, size);
+	//memcpy(&blob[offset], v, size);
 	return offset;
 }
 
@@ -164,7 +164,7 @@ size_t serializeRef(T const &v)
 	auto &blob = getBlob();
 	size_t offset = blob.size();
 	blob.resize(blob.size() + sizeof(v));
-	memcpy(&blob[offset], &v, sizeof(v));
+	//memcpy(&blob[offset], &v, sizeof(v));
 	return offset;
 }
 
@@ -269,14 +269,6 @@ static void METHOD_END(std::string retTy, std::string name)
 	ctx.curMethod = {};
 }
 
-static void FUNC_END(std::string name)
-{
-	auto &ctx = getGlobalTableCTX();
-	assert(ctx.curMethod.name == name);
-	ctx.curInterface.methods[name] = ctx.curMethod;
-	ctx.curMethod = {};
-}
-
 static void PARAM(std::string type, std::string undertype, std::string name, ParamAnnot annot,
 	int ptrs, bool inInterface, size_t size, size_t undersize, std::string numparam)
 {
@@ -293,9 +285,15 @@ void printParamInit(std::stringstream &ss, Method const &method,
 	std::unordered_map<std::string, void *> const &paramValues, std::string paramName)
 {
 	auto const &param = method.params.find(paramName)->second;
+#if 1 || DEBUG
+	if (param.annot != ParamAnnot::_IN_)
+		return;
+#endif
 	auto pData = paramValues.find(paramName)->second;
 	if (param.annot == ParamAnnot::_IN_)
 	{
+#if 1
+#if 0
 		if (param.undertype == "D3D11_SUBRESOURCE_DATA")
 		{
 			if (method.name == "CreateBuffer")
@@ -306,7 +304,7 @@ void printParamInit(std::stringstream &ss, Method const &method,
 				{
 					int num = desc->ByteWidth;
 					size_t hndl = serializePtr(pSubres, sizeof(*pSubres));
-					ss << __INDENT__ << param.type << " tmp_" << param.name
+					ss << __INDENT__ << param.undertype << " *tmp_" << param.name
 						<< " = getInBlobPtr<" << param.undertype << ">(" << hndl << ");\n";
 					size_t memhndl = serializePtr(pSubres->pSysMem, num);
 					ss << __INDENT__ << "tmp_" << param.name
@@ -319,9 +317,15 @@ void printParamInit(std::stringstream &ss, Method const &method,
 				}
 				return;
 			}
+			else
+			{
+				assert(false && "unsopported");
+			}
 		}
+#endif
 		if (param.ptrs == 0)
 		{
+#if 0
 			if (param.undertype == "UINT")
 			{
 				ss << __INDENT__ << param.type << " tmp_" << param.name << " = " << *(UINT*)pData << ";\n";
@@ -353,27 +357,37 @@ void printParamInit(std::stringstream &ss, Method const &method,
 			size_t hndl = serializePtr(pData, param.size);
 			ss << __INDENT__ << param.type << " tmp_" << param.name << " = getInBlobRef<" << param.undertype << ">(" << hndl << ");\n";
 			//assert(false && "unsopported");
+#endif
 		}
-		else if (param.ptrs == 1)
+		else
+#endif
+#if 0
+			if (param.ptrs == 1)
 		{
 			if (*(void**)pData)
 			{
 				if (param.isInterface)
 				{
+#if 1
 					ss << __INDENT__ << param.type << " tmp_" << param.name
-						<< " = getInterface<" << param.undertype << ">(0x" << pData << ");\n";
+						<< " = getInterface<" << param.undertype << ">(0x" << *(void**)pData << ");\n";
+#endif
 				}
 				else
 				{
+#if 1
 					size_t hndl = serializePtr(*(void**)pData, param.size);
 					ss << __INDENT__ << param.type << " tmp_" << param.name
 						<< " = getInBlobPtr<" << param.undertype << ">(" << hndl << ");\n";
+#endif
 				}
 			}
 			else
 				ss << __INDENT__ << param.type << " tmp_" << param.name << " = nullptr;\n";
 		}
-		else if (param.ptrs == 2)
+		else
+#endif
+			if (param.ptrs == 2)
 		{
 			assert(false && "unsopported");
 		}
@@ -453,11 +467,15 @@ void printParamInit(std::stringstream &ss, Method const &method,
 				ss << __INDENT__ << param.undertype << " *tmp_" << param.name
 					<< " = getInBlobPtr<" << param.undertype << ">(" << hndl << ");\n";
 				//ss << __INDENT__ << "for (int i = 0; i < tmp_pDesc->ArraySize * tmp_pDesc->MipLevels; i++)\n";
-				for (int i = 0; i < num; i++)
+				for (int i = 0; i < desc->ArraySize; i++)
 				{
-					size_t memhndl = serializePtr(pSubres[i].pSysMem, desc->Height * pSubres[i].SysMemPitch);
-					ss << __INDENT__ << "tmp_" << param.name
-						<< "[" << i << "].pSysMem = getInBlobPtr<void>(" << memhndl << ");\n";
+					for (int j = 0; j < desc->MipLevels; j++)
+					{
+						int subresId = i * desc->MipLevels + j;
+						size_t memhndl = serializePtr(pSubres[i].pSysMem, desc->Height * pSubres[i].SysMemPitch / (1u << j));
+						ss << __INDENT__ << "tmp_" << param.name
+							<< "[" << subresId << "].pSysMem = getInBlobPtr<void>(" << memhndl << ");\n";
+					}
 				}
 			}
 			else if (method.name == "CreateTexture3D")
@@ -471,9 +489,6 @@ void printParamInit(std::stringstream &ss, Method const &method,
 			
 			return;
 
-		} else if (param.undertype == "D3D11_MAPPED_SUBRESOURCE")
-		{
-			assert(false && "unsopported");
 		}
 		auto numparam = method.params.find(param.numparam)->second;
 		assert(numparam.ptrs == 0 && (
@@ -534,6 +549,10 @@ void printParamInit(std::stringstream &ss, Method const &method,
 	}
 	else if (param.annot == ParamAnnot::_OUT_)
 	{
+		if (param.undertype == "D3D11_MAPPED_SUBRESOURCE")
+		{
+			assert(false && "unsopported");
+		}
 		if (!*(void**)pData)
 		{
 			ss << __INDENT__ << param.type << " tmp_" << param.name
@@ -621,6 +640,17 @@ void printParamFinale(std::stringstream &ss, Method const &method,
 	}
 	else if (param.annot == ParamAnnot::_OUT_)
 	{
+		if (param.name == "ppSurface" && method.name == "GetBuffer"
+			|| param.name == "ppvObject" && method.name == "QueryInterface")
+		{
+			if (!*(void***)pData)
+			{
+				ss << __INDENT__ << "// " << param.name << " was nullptr\n";
+				return;
+			}
+			ss << __INDENT__ << "setInterface(0x" << **(void***)pData << ", *tmp_" << param.name << ");\n";
+			return;
+		}
 		// we don't care about non interfaces being returned
 		if (!param.isInterface)
 		{
@@ -723,12 +753,14 @@ void dumpMethodEvent(
 		i++;
 	}
 	ss << __INDENT__ << ");\n";
+#if 0 && DEBUG
 	for (auto const &item : paramValues)
 	{
 		auto iter = method.params.find(item.first);
 		assert(iter != method.params.end());
 		printParamFinale(ss, method, paramValues, item.first);
 	}
+#endif
 	/*out() << "  " << "getInBlobPtr<DXGI_SURFACE_DESC>(" << serializePtr(pDesc) << "), \n";
 	out() << "  " << "getInBlobRef<UINT>(" << serializeRef(NumSurfaces) << ", \n";
 	out() << "  " << "getInBlobRef<DXGI_USAGE>(" << serializeRef(Usage) << ", \n";
@@ -742,10 +774,18 @@ void dumpMethodEvent(
 }
 
 void dumpFunctionEvent(
-	Method const &method,
+	std::string methName,
 	std::unordered_map<std::string, void *> const &paramValues
 ) {
 	GLOBAL_LOCK;
+	auto &g_classTable = getGlobalObjTable();
+	auto iter = g_classTable.find("GLOBAL");
+	assert(iter != g_classTable.end());
+	Interface const &obj = iter->second;
+	auto miter = obj.methods.find(methName);
+	assert(miter != obj.methods.end());
+	Method const &method = miter->second;
+
 	std::stringstream ss;
 	ss << "static void " << method.name << "_" << getEventNumber() << "() {\n";
 	assert(method.params.size() == paramValues.size());
@@ -758,11 +798,10 @@ void dumpFunctionEvent(
 	}
 	ss << __INDENT__ << method.name << "(\n";
 	int i = 0;
-	for (auto const &item : paramValues)
+	for (auto const &paramName : method.paramsOrdered)
 	{
-		auto iter = method.params.find(item.first);
-		assert(iter != method.params.end());
-		printParam(ss, iter->second, item.second);
+		auto iter = method.params.find(paramName);
+		printParam(ss, iter->second, paramValues.find(paramName)->second);
 		if (i == method.params.size() - 1)
 		{
 			ss << "\n";
@@ -771,14 +810,15 @@ void dumpFunctionEvent(
 		{
 			ss << ", \n";
 		}
+		i++;
 	}
+	ss << __INDENT__ << ");\n";
 	for (auto const &item : paramValues)
 	{
 		auto iter = method.params.find(item.first);
 		assert(iter != method.params.end());
 		printParamFinale(ss, method, paramValues, item.first);
 	}
-	ss << __INDENT__ << ");\n";
 	ss << "}\n";
 	out() << ss.str();
 }
