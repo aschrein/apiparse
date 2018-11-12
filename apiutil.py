@@ -31,6 +31,7 @@ class APIFunc:
 		self.name = name
 		self.retTy = None
 		self.params = []
+		self.paramTable = {}
 
 import re
 
@@ -111,6 +112,8 @@ class APIParam:
 			self.annot = "OUT"
 		elif "_Out_" in annot:
 			self.annot = "OUT"
+
+		self.number = self.number.replace("*", "").replace(" ", "")
 
 class APIStruct:
 	def __init__(self, name):
@@ -195,6 +198,7 @@ def RETURN_TYPE(ctx, name):
 def PARAM(ctx, annot, type, name):
 	assert(ctx.curFunc != None)
 	ctx.curFunc.params.append(APIParam(annot, type, name))
+	ctx.curFunc.paramTable[name] = ctx.curFunc.params[-1]
 
 def FUNC_END(ctx, name):
 	assert(ctx.curFunc != None)

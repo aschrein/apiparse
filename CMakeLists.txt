@@ -19,7 +19,9 @@ link_directories(${LLVM_LIBRARY_DIRS})
 add_definitions(${LLVM_DEFINITIONS})
 
 add_executable(apiparse main.cpp apiutil.py d3d11wrapgen.py)
-add_executable(example example.cpp)
+add_executable(example
+${CMAKE_CURRENT_BINARY_DIR}/dump.cpp
+example.cpp)
 
 target_link_libraries(apiparse PRIVATE
     clangASTMatchers
@@ -65,6 +67,9 @@ endif()
 
 install(TARGETS apiparse DESTINATION bin)
 install(TARGETS example DESTINATION bin)
+target_include_directories(example PUBLIC
+	${CMAKE_CURRENT_SOURCE_DIR}
+)
 configure_file(include_d3d11.cpp ${CMAKE_CURRENT_BINARY_DIR}/include_d3d11.cpp COPYONLY)
 configure_file(apiutil.py ${CMAKE_CURRENT_BINARY_DIR}/apiutil.py COPYONLY)
 configure_file(d3d11wrapgen.py ${CMAKE_CURRENT_BINARY_DIR}/d3d11wrapgen.py COPYONLY)

@@ -153,27 +153,42 @@ def dumpMethod(ctx, Ty, base, Meth, declOnly):
 				rescheck = "true"
 				if Meth.retTy == "HRESULT":
 					rescheck = "!ret"
+
+
 				for param in Meth.params:
+					if not "OUT" in param.annot:
+						continue
+					preloopcheck = ""
+					paramNumberItem = param.number
+					if param.number != "NOT_SET":
+						if param.number in Meth.paramTable:
+							numParam = Meth.paramTable[param.number]
+							paramNumberItem = numParam.name
+							if numParam.ptrsNum == 1:
+								preloopcheck = "if (" + paramNumberItem + ")"
+								paramNumberItem = "*" + paramNumberItem
+						else:
+							print(Ind(2) + "// Suspicious place")
 					if countPtrs(param.type) == 2 and param.annot in ["INOUT_ARRAY"]:
 						RawType = param.type.split(" ")[0]
 						if RawType == "struct":
 							RawType = param.type.split(" ")[1]
 						if RawType in ctx.apiTypes.keys():
-							print(Ind(2) + "for (uint32_t i = 0; i < " + param.number + "; i++) if ("+rescheck+" && tmp_" + param.name + "[i]) " + param.name + "[i] = getWrapper<" + RawType +
+							print(Ind(2) +preloopcheck + "for (uint32_t i = 0; i < " + paramNumberItem + "; i++) if ("+rescheck+" && tmp_" + param.name + "[i]) " + param.name + "[i] = getWrapper<" + RawType +
 							", Wrapped" + ctx.wrapTable[RawType].name + ">(tmp_" + param.name + "[i]);")
 					if countPtrs(param.type) == 2 and param.annot in ["OUT_ARRAY"]:
 						RawType = param.type.split(" ")[0]
 						if RawType == "struct":
 							RawType = param.type.split(" ")[1]
 						if RawType in ctx.apiTypes.keys():
-							print(Ind(2) + "for (uint32_t i = 0; i < " + param.number + "; i++) if ("+rescheck+" && " + param.name + " && " + param.name + "[i]) " + param.name + "[i] = getWrapper<" + RawType +
+							print(Ind(2) + preloopcheck + "for (uint32_t i = 0; i < " + paramNumberItem + "; i++) if ("+rescheck+" && " + param.name + " && " + param.name + "[i]) " + param.name + "[i] = getWrapper<" + RawType +
 							", Wrapped" + ctx.wrapTable[RawType].name + ">(" + param.name + "[i]);")
 					elif countPtrs(param.type) == 2 and param.annot in ["OUT", "INOUT"]:
 						RawType = param.type.split(" ")[0]
 						if RawType == "struct":
 							RawType = param.type.split(" ")[1]
 						if RawType in ctx.apiTypes.keys():
-							print(Ind(4) + "if ("+rescheck+" && " + param.name + " && *" + param.name  + " ) *" + param.name + " = getWrapper<" + RawType + ", Wrapped" + ctx.wrapTable[RawType].name + ">(*" + param.name + ");")
+							print(Ind(2) + "if ("+rescheck+" && " + param.name + " && *" + param.name  + " ) *" + param.name + " = getWrapper<" + RawType + ", Wrapped" + ctx.wrapTable[RawType].name + ">(*" + param.name + ");")
 					else:
 						pass
 			""""
