@@ -602,7 +602,7 @@ void printParamInit(std::stringstream &ss, Method const &method,
 					for (int j = 0; j < desc->MipLevels; j++)
 					{
 						int subresId = i * desc->MipLevels + j;
-						size_t memhndl = serializePtr(pSubres[subresId].pSysMem, pSubres[subresId].SysMemSlicePitch / (1u << (2u*j)));
+						size_t memhndl = serializePtr(pSubres[subresId].pSysMem, pSubres[subresId].SysMemSlicePitch);
 						size_t hndl = serializePtr(&pSubres[subresId], sizeof(*pSubres));
 						ss << __INDENT__ << "tmp_" << param.name
 							<< "[" << subresId << "]" << " = *getInBlobPtr<" << param.undertype << ">(" << hndl << ");\n";
@@ -972,7 +972,7 @@ void dumpMethodEvent(
 		assert(!mapTable[(size_t)pResource][(size_t)Subresource].pData);
 		mapTable[(size_t)pResource][(size_t)Subresource] = { pMapped->pData, pMapped->DepthPitch };
 	}
-	if (method.name == "Unmap")
+	else if (method.name == "Unmap")
 	{
 		auto *pResource = *(void**)paramValues.find("pResource")->second.first;
 		auto Subresource = *(UINT*)paramValues.find("Subresource")->second.first;
@@ -987,6 +987,10 @@ void dumpMethodEvent(
 			" getInBlobPtr<void>(" << hndl << "), mapDesc.size);\n";
 		mapTable[(size_t)pResource].erase((size_t)Subresource);
 		ss << __INDENT__ << "mapTable[(size_t)tmp_pResource].erase((size_t)tmp_Subresource);\n";
+	}
+	else if (method.name == "CreateSwapChain")
+	{
+		ss << __INDENT__ << "tmp_pDesc.OutputWindow = g_window;\n";
 	}
 
 	if (method.retTy != "void")
@@ -1076,6 +1080,12 @@ void dumpFunctionEvent(
 		assert(iter != method.params.end());
 		printParamInit(ss, method, paramValues, item.first);
 	}
+
+	if (method.name == "D3D11CreateDeviceAndSwapChain")
+	{
+		ss << __INDENT__ << "tmp_pSwapChainDesc.OutputWindow = g_window;\n";
+	}
+
 	if (method.retTy != "void")
 		ss << __INDENT__ << "auto ret = " << method.name << "(\n";
 	else
