@@ -69,14 +69,22 @@ int main(int, char**)
   ShowWindow(hwnd, SW_SHOWDEFAULT);
   UpdateWindow(hwnd);
 	g_window = hwnd;
-  if (CreateDeviceD3D(hwnd) < 0)
+  /*if (CreateDeviceD3D(hwnd) < 0)
   {
     return 1;
-  }
+  }*/
 
 	for (auto const &item : g_events)
 	{
 		item.second();
+		MSG msg;
+		ZeroMemory(&msg, sizeof(msg));
+		if (PeekMessage(&msg, NULL, 0U, 0U, PM_REMOVE))
+		{
+			TranslateMessage(&msg);
+			DispatchMessage(&msg);
+			continue;
+		}
 	}
 
   MSG msg;

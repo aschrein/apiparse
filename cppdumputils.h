@@ -129,7 +129,18 @@ T *getWrapper(T *t)
   else
   {
 		out() << "// getWrapper() table hit\n";
-    return reinterpret_cast<T*>((*fd).second);
+		auto *pWrap = (WT*)(*fd).second;
+		if (pWrap->CheckLifetime())
+		{
+			return (T*)(pWrap);
+		}
+		else
+		{
+			out() << "// getWrapper() stalled object\n";
+			auto *wrap = new WT(t);
+			return reinterpret_cast<T*>(wrap);
+		}
+
   }
 }
 
@@ -183,6 +194,19 @@ static std::vector<unsigned char> &getBlob()
 static std::unordered_map<size_t, size_t> &getInterfaceTable()
 {
 	static std::unordered_map<size_t, size_t> table;
+	return table;
+}
+
+struct MapDesc
+{
+	void *pData;
+	size_t size;
+};
+
+// pResource -> subresourceID -> MapDesc
+static std::unordered_map<size_t, std::unordered_map<size_t, MapDesc>> &getMapTable()
+{
+	static std::unordered_map<size_t, std::unordered_map<size_t, MapDesc>> table;
 	return table;
 }
 
@@ -395,7 +419,22 @@ void printParamInit(std::stringstream &ss, Method const &method,
 		if (param.ptrs == 0)
 		{
 #if 1
-			if (param.undertype == "UINT")
+			if (param.undertype == "D3D11_PRIMITIVE_TOPOLOGY")
+			{
+				ss << __INDENT__ << param.type << " tmp_" << param.name << " = (D3D11_PRIMITIVE_TOPOLOGY)" << *(D3D11_PRIMITIVE_TOPOLOGY*)pData.first << ";\n";
+				return;
+			}
+			else if (param.undertype == "DXGI_FORMAT")
+			{
+				ss << __INDENT__ << param.type << " tmp_" << param.name << " = (DXGI_FORMAT)" << *(DXGI_FORMAT*)pData.first << ";\n";
+				return;
+			}
+			else if (param.undertype == "INT")
+			{
+				ss << __INDENT__ << param.type << " tmp_" << param.name << " = " << *(INT*)pData.first << ";\n";
+				return;
+			}
+			else if (param.undertype == "UINT")
 			{
 				ss << __INDENT__ << param.type << " tmp_" << param.name << " = " << *(UINT*)pData.first << ";\n";
 				return;
@@ -639,10 +678,21 @@ void printParamInit(std::stringstream &ss, Method const &method,
 				ss << __INDENT__ << param.undertype << " tmp_" << param.name << "[" << num << "] = {\n";
 				for (int i = 0; i < num; i++)
 				{
-					size_t hndl = serializePtr(pBase + i * param.undersize, param.undersize);
-					ss << __INDENT__ << "getInBlobRef<" << param.undertype << ">(" << hndl << "),\n";
+					if (param.undertype == "INT")
+					{
+						ss << __INDENT__ << *(INT*)(pBase + i * param.undersize) << ",\n";
+					}
+					else if (param.undertype == "UINT")
+					{
+						ss << __INDENT__ << *(UINT*)(pBase + i * param.undersize) << ",\n";
+					}
+					else
+					{
+						size_t hndl = serializePtr(pBase + i * param.undersize, param.undersize);
+						ss << __INDENT__ << "getInBlobRef<" << param.undertype << ">(" << hndl << "),\n";
+					}
 				}
-				ss << "};\n";
+				ss << __INDENT__ << "};\n";
 			}
 			else
 			{
@@ -664,10 +714,6 @@ void printParamInit(std::stringstream &ss, Method const &method,
 	}
 	else if (param.annot == ParamAnnot::_OUT_)
 	{
-		if (param.undertype == "D3D11_MAPPED_SUBRESOURCE")
-		{
-			assert(false && "unsopported");
-		}
 		if (!*(void**)pData.first)
 		{
 			ss << __INDENT__ << param.type << " tmp_" << param.name
@@ -739,6 +785,7 @@ void printParam(std::stringstream &ss, Method const &method, Param const &param,
 	{
 		if (param.annot == ParamAnnot::_INOUT_ARRAY_
 			|| param.annot == ParamAnnot::_IN_ARRAY_
+			|| param.annot == ParamAnnot::_OUT_ARRAY_
 			)
 			ss << __INDENT__ << " tmp_" << param.name;
 		else
@@ -871,6 +918,26 @@ void dumpMethodEvent(
 	void *pRet,
 	std::unordered_map<std::string, std::pair<void *, void *>> const &paramValues
 ) {
+	// useless getters
+	if (
+		methName.find("IAGet") != std::string::npos
+		|| methName.find("VSGet") != std::string::npos
+		|| methName.find("HSGet") != std::string::npos
+		|| methName.find("DSGet") != std::string::npos
+		|| methName.find("GSGet") != std::string::npos
+		|| methName.find("PSGet") != std::string::npos
+		|| methName.find("CSGet") != std::string::npos
+		|| methName.find("RSGet") != std::string::npos
+		|| methName.find("OMGet") != std::string::npos
+		|| methName.find("CheckMultisampleQualityLevels") != std::string::npos
+		|| methName.find("GetDesc") != std::string::npos
+		// yes, it's dirty
+		|| methName.find("Release") != std::string::npos
+		)
+	{
+		return;
+	}
+
 	GLOBAL_LOCK;
 	auto &g_classTable = getGlobalObjTable();
 	auto iter = g_classTable.find(objName);
@@ -894,6 +961,34 @@ void dumpMethodEvent(
 		printParamInit(ss, method, paramValues, item.first);
 	}
 #endif
+	if (method.name == "Map")
+	{
+		auto *pResource = *(void**)paramValues.find("pResource")->second.second;
+		auto Subresource = *(UINT*)paramValues.find("Subresource")->second.first;
+		auto &mapTable = getMapTable();
+		auto *pMapped = *(D3D11_MAPPED_SUBRESOURCE**)paramValues.find("pMappedResource")->second.second;
+		assert(pMapped->DepthPitch);
+		// double map?
+		assert(!mapTable[(size_t)pResource][(size_t)Subresource].pData);
+		mapTable[(size_t)pResource][(size_t)Subresource] = { pMapped->pData, pMapped->DepthPitch };
+	}
+	if (method.name == "Unmap")
+	{
+		auto *pResource = *(void**)paramValues.find("pResource")->second.first;
+		auto Subresource = *(UINT*)paramValues.find("Subresource")->second.first;
+		auto &mapTable = getMapTable();
+		// not 0, but it's ~possible if Map was the first function to write to blob
+		assert(mapTable[(size_t)pResource][(size_t)Subresource].pData);
+		auto mapDesc = mapTable[(size_t)pResource][(size_t)Subresource];
+		size_t hndl = serializePtr(mapDesc.pData, mapDesc.size);
+		ss << __INDENT__ << "auto &mapTable = getMapTable();\n";
+		ss << __INDENT__ << "auto mapDesc = mapTable[(size_t)tmp_pResource][(size_t)tmp_Subresource];\n";
+		ss << __INDENT__ << " memcpy(mapDesc.pData, " <<
+			" getInBlobPtr<void>(" << hndl << "), mapDesc.size);\n";
+		mapTable[(size_t)pResource].erase((size_t)Subresource);
+		ss << __INDENT__ << "mapTable[(size_t)tmp_pResource].erase((size_t)tmp_Subresource);\n";
+	}
+
 	if (method.retTy != "void")
 		ss << __INDENT__ << "auto ret = getInterface<" << obj.name << ">(0x" << pThis << ")->" << method.name << "(\n";
 	else
@@ -925,7 +1020,7 @@ void dumpMethodEvent(
 		else if (method.retTy == "ULONG")
 		{
 			ULONG cur = *(ULONG*)pRet;
-			ss << __INDENT__ << "assert(ret == " << cur << ");\n";
+			ss << __INDENT__ << "if(ret != " << cur << ") BRK();\n";
 		}
 	}
 #if 1
@@ -936,6 +1031,11 @@ void dumpMethodEvent(
 		printParamFinale(ss, method, paramValues, item.first);
 	}
 #endif
+	if (method.name == "Map")
+	{
+		ss << __INDENT__ << "auto &mapTable = getMapTable();\n";
+		ss << __INDENT__ << "mapTable[(size_t)tmp_pResource][(size_t)tmp_Subresource] = { tmp_pMappedResource.pData, tmp_pMappedResource.DepthPitch };\n";
+	}
 	/*out() << "  " << "getInBlobPtr<DXGI_SURFACE_DESC>(" << serializePtr(pDesc) << "), \n";
 	out() << "  " << "getInBlobRef<UINT>(" << serializeRef(NumSurfaces) << ", \n";
 	out() << "  " << "getInBlobRef<DXGI_USAGE>(" << serializeRef(Usage) << ", \n";
@@ -1007,7 +1107,7 @@ void dumpFunctionEvent(
 		else if (method.retTy == "ULONG")
 		{
 			ULONG cur = *(ULONG*)pRet;
-			ss << __INDENT__ << "assert(ret == " << cur << ");\n";
+			ss << __INDENT__ << "if(ret != " << cur << ") BRK();\n";
 		}
 	}
 	for (auto const &item : paramValues)
@@ -1021,3 +1121,5 @@ void dumpFunctionEvent(
 	declOut() << "static void " << funcName << "();\n";
 	out() << ss.str();
 }
+
+#define BRK() {}

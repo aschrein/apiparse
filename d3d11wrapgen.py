@@ -73,26 +73,27 @@ def dumpMethod(ctx, Ty, base, Meth, declOnly):
 				##### special case for Release()
 				if Meth.name == "AddRef":
 					print(Ind(2) + "assert(" + "m_pMain);")
-					print(Ind(2) + "auto ret = " + "m_pMain->" + Meth.name + "();")
-					
+					print(Ind(2) + "auto ret = " + "m_pMain->" + Meth.name + "() - 1;")
+					#print(Ind(2) + "auto retSelf = ++m_refCnt;")
 					print(Ind(2) + "if (recursionFlag) {")
 					print(Ind(4) + "return ret;")
 					print(Ind(2) + "}")
 					print(Ind(2) + "getRecursionFlag() = false;")
-					print(Ind(2) + "out() << \"// returned \" << ret << \"\\n\";")
+					print(Ind(2) + "out() << \"// orig=\" << ret << \"\\n\";")
 					dumpCPP()
 					print(Ind(2) + "return ret;")
 				elif Meth.name == "Release":
 					print(Ind(2) + "assert(" + "m_pMain);")
-					print(Ind(2) + "auto ret = " + "m_pMain->" + Meth.name + "();")
+					print(Ind(2) + "auto ret = " + "m_pMain->" + Meth.name + "() - 1;")
+					#print(Ind(2) + "auto retSelf = --m_refCnt;")
 					print(Ind(2) + "if (recursionFlag) {")
-					print(Ind(4) + "if (!ret) delete this;")
+					print(Ind(4) + "if (!ret) { m_pMain->Release(); delete this;}")
 					print(Ind(4) + "return ret;")
 					print(Ind(2) + "}")
 					print(Ind(2) + "getRecursionFlag() = false;")
-					print(Ind(2) + "out() << \"// returned \" << ret << \"\\n\";")
+					print(Ind(2) + "out() << \"// orig=\" << ret << \"\\n\";")
 					dumpCPP()
-					print(Ind(2) + "if (!ret) delete this;")
+					print(Ind(2) + "if (!ret) { m_pMain->Release(); delete this;}")
 					print(Ind(2) + "return ret;")
 				else:
 					print(Ind(2) + "auto ret = " + wrapName + "->" + Meth.name + "();")
@@ -388,7 +389,12 @@ def genWrappers(ctx):
 			print(Ind(2) + base.name + " *m_p" + base.name + ";")
 		if Ty.hasBase(ctx, "IUnknown"):
 			print(Ind(2) + "IUnknown *m_pMain;")
+		#print(Ind(2) + "ULONG m_refCnt;")
 		print("public:")
+		if Ty.hasBase(ctx, "IUnknown"):
+			print(Ind(2) + "bool CheckLifetime() { if (!m_pMain->Release()) { delete this; return false; } else { m_pMain->AddRef(); return true; } }")
+		else:
+			print(Ind(2) + "bool CheckLifetime() { return true; }")
 		#### CONSTRUCTOR
 		print(Ind(2) + "template<typename T>")
 		print(Ind(2) + "Wrapped" + TyName + "(T *pWrapped) {")
@@ -413,6 +419,8 @@ def genWrappers(ctx):
 
 			else:
 				print(Ind(4) + "m_p" + base.name + " = (" + base.name + "*)pWrapped;")
+		if Ty.hasBase(ctx, "IUnknown"):
+			print(Ind(6) + "m_pMain->AddRef();")
 		print(Ind(2) + "}")
 		#### DESTRUCTOR
 		print(Ind(2) + "~Wrapped" + TyName + "() {")

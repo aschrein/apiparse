@@ -4093,6 +4093,7 @@ private:
   IUnknown *m_pIUnknown;
   IUnknown *m_pMain;
 public:
+  bool CheckLifetime() { if (!m_pMain->Release()) { delete this; return false; } else { m_pMain->AddRef(); return true; } }
   template<typename T>
   WrappedIDXGIKeyedMutex(T *pWrapped) {
     out() << "// [CREATE] IDXGIKeyedMutex(0x" << this << ", 0x" << pWrapped << " )\n";
@@ -4132,6 +4133,7 @@ public:
       wt[reinterpret_cast<size_t>((void*)m_pIDXGIKeyedMutex)] = reinterpret_cast<size_t>((void*)this);
       m_pMain = (IUnknown *)m_pIDXGIKeyedMutex;
     }
+      m_pMain->AddRef();
   }
   ~WrappedIDXGIKeyedMutex() {
     out() << "// [DESTROY] IDXGIKeyedMutex(0x" << this << " )\n";
@@ -4199,6 +4201,7 @@ private:
   IUnknown *m_pIUnknown;
   IUnknown *m_pMain;
 public:
+  bool CheckLifetime() { if (!m_pMain->Release()) { delete this; return false; } else { m_pMain->AddRef(); return true; } }
   template<typename T>
   WrappedID3D10Blob(T *pWrapped) {
     out() << "// [CREATE] ID3D10Blob(0x" << this << ", 0x" << pWrapped << " )\n";
@@ -4222,6 +4225,7 @@ public:
       wt[reinterpret_cast<size_t>((void*)m_pID3D10Blob)] = reinterpret_cast<size_t>((void*)this);
       m_pMain = (IUnknown *)m_pID3D10Blob;
     }
+      m_pMain->AddRef();
   }
   ~WrappedID3D10Blob() {
     out() << "// [DESTROY] ID3D10Blob(0x" << this << " )\n";
@@ -4258,6 +4262,7 @@ private:
   IUnknown *m_pIUnknown;
   IUnknown *m_pMain;
 public:
+  bool CheckLifetime() { if (!m_pMain->Release()) { delete this; return false; } else { m_pMain->AddRef(); return true; } }
   template<typename T>
   WrappedID3DDestructionNotifier(T *pWrapped) {
     out() << "// [CREATE] ID3DDestructionNotifier(0x" << this << ", 0x" << pWrapped << " )\n";
@@ -4281,6 +4286,7 @@ public:
       wt[reinterpret_cast<size_t>((void*)m_pID3DDestructionNotifier)] = reinterpret_cast<size_t>((void*)this);
       m_pMain = (IUnknown *)m_pID3DDestructionNotifier;
     }
+      m_pMain->AddRef();
   }
   ~WrappedID3DDestructionNotifier() {
     out() << "// [DESTROY] ID3DDestructionNotifier(0x" << this << " )\n";
@@ -4320,6 +4326,7 @@ class WrappedID3DInclude : public ID3DInclude {
 private:
   ID3DInclude *m_pID3DInclude;
 public:
+  bool CheckLifetime() { return true; }
   template<typename T>
   WrappedID3DInclude(T *pWrapped) {
     out() << "// [CREATE] ID3DInclude(0x" << this << ", 0x" << pWrapped << " )\n";
@@ -4365,6 +4372,7 @@ private:
   IUnknown *m_pIUnknown;
   IUnknown *m_pMain;
 public:
+  bool CheckLifetime() { if (!m_pMain->Release()) { delete this; return false; } else { m_pMain->AddRef(); return true; } }
   template<typename T>
   WrappedID3D11DepthStencilState(T *pWrapped) {
     out() << "// [CREATE] ID3D11DepthStencilState(0x" << this << ", 0x" << pWrapped << " )\n";
@@ -4396,6 +4404,7 @@ public:
       wt[reinterpret_cast<size_t>((void*)m_pID3D11DepthStencilState)] = reinterpret_cast<size_t>((void*)this);
       m_pMain = (IUnknown *)m_pID3D11DepthStencilState;
     }
+      m_pMain->AddRef();
   }
   ~WrappedID3D11DepthStencilState() {
     out() << "// [DESTROY] ID3D11DepthStencilState(0x" << this << " )\n";
@@ -4455,6 +4464,7 @@ private:
   IUnknown *m_pIUnknown;
   IUnknown *m_pMain;
 public:
+  bool CheckLifetime() { if (!m_pMain->Release()) { delete this; return false; } else { m_pMain->AddRef(); return true; } }
   template<typename T>
   WrappedID3D11Buffer(T *pWrapped) {
     out() << "// [CREATE] ID3D11Buffer(0x" << this << ", 0x" << pWrapped << " )\n";
@@ -4494,6 +4504,7 @@ public:
       wt[reinterpret_cast<size_t>((void*)m_pID3D11Buffer)] = reinterpret_cast<size_t>((void*)this);
       m_pMain = (IUnknown *)m_pID3D11Buffer;
     }
+      m_pMain->AddRef();
   }
   ~WrappedID3D11Buffer() {
     out() << "// [DESTROY] ID3D11Buffer(0x" << this << " )\n";
@@ -4562,6 +4573,7 @@ private:
   IUnknown *m_pIUnknown;
   IUnknown *m_pMain;
 public:
+  bool CheckLifetime() { if (!m_pMain->Release()) { delete this; return false; } else { m_pMain->AddRef(); return true; } }
   template<typename T>
   WrappedID3D11Texture1D(T *pWrapped) {
     out() << "// [CREATE] ID3D11Texture1D(0x" << this << ", 0x" << pWrapped << " )\n";
@@ -4601,6 +4613,7 @@ public:
       wt[reinterpret_cast<size_t>((void*)m_pID3D11Texture1D)] = reinterpret_cast<size_t>((void*)this);
       m_pMain = (IUnknown *)m_pID3D11Texture1D;
     }
+      m_pMain->AddRef();
   }
   ~WrappedID3D11Texture1D() {
     out() << "// [DESTROY] ID3D11Texture1D(0x" << this << " )\n";
@@ -4669,6 +4682,7 @@ private:
   IUnknown *m_pIUnknown;
   IUnknown *m_pMain;
 public:
+  bool CheckLifetime() { if (!m_pMain->Release()) { delete this; return false; } else { m_pMain->AddRef(); return true; } }
   template<typename T>
   WrappedID3D11DepthStencilView(T *pWrapped) {
     out() << "// [CREATE] ID3D11DepthStencilView(0x" << this << ", 0x" << pWrapped << " )\n";
@@ -4708,6 +4722,7 @@ public:
       wt[reinterpret_cast<size_t>((void*)m_pID3D11DepthStencilView)] = reinterpret_cast<size_t>((void*)this);
       m_pMain = (IUnknown *)m_pID3D11DepthStencilView;
     }
+      m_pMain->AddRef();
   }
   ~WrappedID3D11DepthStencilView() {
     out() << "// [DESTROY] ID3D11DepthStencilView(0x" << this << " )\n";
@@ -4769,6 +4784,7 @@ private:
   IUnknown *m_pIUnknown;
   IUnknown *m_pMain;
 public:
+  bool CheckLifetime() { if (!m_pMain->Release()) { delete this; return false; } else { m_pMain->AddRef(); return true; } }
   template<typename T>
   WrappedID3D11VertexShader(T *pWrapped) {
     out() << "// [CREATE] ID3D11VertexShader(0x" << this << ", 0x" << pWrapped << " )\n";
@@ -4800,6 +4816,7 @@ public:
       wt[reinterpret_cast<size_t>((void*)m_pID3D11VertexShader)] = reinterpret_cast<size_t>((void*)this);
       m_pMain = (IUnknown *)m_pID3D11VertexShader;
     }
+      m_pMain->AddRef();
   }
   ~WrappedID3D11VertexShader() {
     out() << "// [DESTROY] ID3D11VertexShader(0x" << this << " )\n";
@@ -4853,6 +4870,7 @@ private:
   IUnknown *m_pIUnknown;
   IUnknown *m_pMain;
 public:
+  bool CheckLifetime() { if (!m_pMain->Release()) { delete this; return false; } else { m_pMain->AddRef(); return true; } }
   template<typename T>
   WrappedID3D11HullShader(T *pWrapped) {
     out() << "// [CREATE] ID3D11HullShader(0x" << this << ", 0x" << pWrapped << " )\n";
@@ -4884,6 +4902,7 @@ public:
       wt[reinterpret_cast<size_t>((void*)m_pID3D11HullShader)] = reinterpret_cast<size_t>((void*)this);
       m_pMain = (IUnknown *)m_pID3D11HullShader;
     }
+      m_pMain->AddRef();
   }
   ~WrappedID3D11HullShader() {
     out() << "// [DESTROY] ID3D11HullShader(0x" << this << " )\n";
@@ -4937,6 +4956,7 @@ private:
   IUnknown *m_pIUnknown;
   IUnknown *m_pMain;
 public:
+  bool CheckLifetime() { if (!m_pMain->Release()) { delete this; return false; } else { m_pMain->AddRef(); return true; } }
   template<typename T>
   WrappedID3D11DomainShader(T *pWrapped) {
     out() << "// [CREATE] ID3D11DomainShader(0x" << this << ", 0x" << pWrapped << " )\n";
@@ -4968,6 +4988,7 @@ public:
       wt[reinterpret_cast<size_t>((void*)m_pID3D11DomainShader)] = reinterpret_cast<size_t>((void*)this);
       m_pMain = (IUnknown *)m_pID3D11DomainShader;
     }
+      m_pMain->AddRef();
   }
   ~WrappedID3D11DomainShader() {
     out() << "// [DESTROY] ID3D11DomainShader(0x" << this << " )\n";
@@ -5021,6 +5042,7 @@ private:
   IUnknown *m_pIUnknown;
   IUnknown *m_pMain;
 public:
+  bool CheckLifetime() { if (!m_pMain->Release()) { delete this; return false; } else { m_pMain->AddRef(); return true; } }
   template<typename T>
   WrappedID3D11GeometryShader(T *pWrapped) {
     out() << "// [CREATE] ID3D11GeometryShader(0x" << this << ", 0x" << pWrapped << " )\n";
@@ -5052,6 +5074,7 @@ public:
       wt[reinterpret_cast<size_t>((void*)m_pID3D11GeometryShader)] = reinterpret_cast<size_t>((void*)this);
       m_pMain = (IUnknown *)m_pID3D11GeometryShader;
     }
+      m_pMain->AddRef();
   }
   ~WrappedID3D11GeometryShader() {
     out() << "// [DESTROY] ID3D11GeometryShader(0x" << this << " )\n";
@@ -5105,6 +5128,7 @@ private:
   IUnknown *m_pIUnknown;
   IUnknown *m_pMain;
 public:
+  bool CheckLifetime() { if (!m_pMain->Release()) { delete this; return false; } else { m_pMain->AddRef(); return true; } }
   template<typename T>
   WrappedID3D11PixelShader(T *pWrapped) {
     out() << "// [CREATE] ID3D11PixelShader(0x" << this << ", 0x" << pWrapped << " )\n";
@@ -5136,6 +5160,7 @@ public:
       wt[reinterpret_cast<size_t>((void*)m_pID3D11PixelShader)] = reinterpret_cast<size_t>((void*)this);
       m_pMain = (IUnknown *)m_pID3D11PixelShader;
     }
+      m_pMain->AddRef();
   }
   ~WrappedID3D11PixelShader() {
     out() << "// [DESTROY] ID3D11PixelShader(0x" << this << " )\n";
@@ -5189,6 +5214,7 @@ private:
   IUnknown *m_pIUnknown;
   IUnknown *m_pMain;
 public:
+  bool CheckLifetime() { if (!m_pMain->Release()) { delete this; return false; } else { m_pMain->AddRef(); return true; } }
   template<typename T>
   WrappedID3D11ComputeShader(T *pWrapped) {
     out() << "// [CREATE] ID3D11ComputeShader(0x" << this << ", 0x" << pWrapped << " )\n";
@@ -5220,6 +5246,7 @@ public:
       wt[reinterpret_cast<size_t>((void*)m_pID3D11ComputeShader)] = reinterpret_cast<size_t>((void*)this);
       m_pMain = (IUnknown *)m_pID3D11ComputeShader;
     }
+      m_pMain->AddRef();
   }
   ~WrappedID3D11ComputeShader() {
     out() << "// [DESTROY] ID3D11ComputeShader(0x" << this << " )\n";
@@ -5273,6 +5300,7 @@ private:
   IUnknown *m_pIUnknown;
   IUnknown *m_pMain;
 public:
+  bool CheckLifetime() { if (!m_pMain->Release()) { delete this; return false; } else { m_pMain->AddRef(); return true; } }
   template<typename T>
   WrappedID3D11InputLayout(T *pWrapped) {
     out() << "// [CREATE] ID3D11InputLayout(0x" << this << ", 0x" << pWrapped << " )\n";
@@ -5304,6 +5332,7 @@ public:
       wt[reinterpret_cast<size_t>((void*)m_pID3D11InputLayout)] = reinterpret_cast<size_t>((void*)this);
       m_pMain = (IUnknown *)m_pID3D11InputLayout;
     }
+      m_pMain->AddRef();
   }
   ~WrappedID3D11InputLayout() {
     out() << "// [DESTROY] ID3D11InputLayout(0x" << this << " )\n";
@@ -5358,6 +5387,7 @@ private:
   IUnknown *m_pIUnknown;
   IUnknown *m_pMain;
 public:
+  bool CheckLifetime() { if (!m_pMain->Release()) { delete this; return false; } else { m_pMain->AddRef(); return true; } }
   template<typename T>
   WrappedID3D11SamplerState(T *pWrapped) {
     out() << "// [CREATE] ID3D11SamplerState(0x" << this << ", 0x" << pWrapped << " )\n";
@@ -5389,6 +5419,7 @@ public:
       wt[reinterpret_cast<size_t>((void*)m_pID3D11SamplerState)] = reinterpret_cast<size_t>((void*)this);
       m_pMain = (IUnknown *)m_pID3D11SamplerState;
     }
+      m_pMain->AddRef();
   }
   ~WrappedID3D11SamplerState() {
     out() << "// [DESTROY] ID3D11SamplerState(0x" << this << " )\n";
@@ -5449,6 +5480,7 @@ private:
   IUnknown *m_pIUnknown;
   IUnknown *m_pMain;
 public:
+  bool CheckLifetime() { if (!m_pMain->Release()) { delete this; return false; } else { m_pMain->AddRef(); return true; } }
   template<typename T>
   WrappedID3D11Predicate(T *pWrapped) {
     out() << "// [CREATE] ID3D11Predicate(0x" << this << ", 0x" << pWrapped << " )\n";
@@ -5496,6 +5528,7 @@ public:
       wt[reinterpret_cast<size_t>((void*)m_pID3D11Predicate)] = reinterpret_cast<size_t>((void*)this);
       m_pMain = (IUnknown *)m_pID3D11Predicate;
     }
+      m_pMain->AddRef();
   }
   ~WrappedID3D11Predicate() {
     out() << "// [DESTROY] ID3D11Predicate(0x" << this << " )\n";
@@ -5560,6 +5593,7 @@ private:
   IUnknown *m_pIUnknown;
   IUnknown *m_pMain;
 public:
+  bool CheckLifetime() { if (!m_pMain->Release()) { delete this; return false; } else { m_pMain->AddRef(); return true; } }
   template<typename T>
   WrappedID3D11Counter(T *pWrapped) {
     out() << "// [CREATE] ID3D11Counter(0x" << this << ", 0x" << pWrapped << " )\n";
@@ -5599,6 +5633,7 @@ public:
       wt[reinterpret_cast<size_t>((void*)m_pID3D11Counter)] = reinterpret_cast<size_t>((void*)this);
       m_pMain = (IUnknown *)m_pID3D11Counter;
     }
+      m_pMain->AddRef();
   }
   ~WrappedID3D11Counter() {
     out() << "// [DESTROY] ID3D11Counter(0x" << this << " )\n";
@@ -5662,6 +5697,7 @@ private:
   IUnknown *m_pIUnknown;
   IUnknown *m_pMain;
 public:
+  bool CheckLifetime() { if (!m_pMain->Release()) { delete this; return false; } else { m_pMain->AddRef(); return true; } }
   template<typename T>
   WrappedID3D11ClassInstance(T *pWrapped) {
     out() << "// [CREATE] ID3D11ClassInstance(0x" << this << ", 0x" << pWrapped << " )\n";
@@ -5693,6 +5729,7 @@ public:
       wt[reinterpret_cast<size_t>((void*)m_pID3D11ClassInstance)] = reinterpret_cast<size_t>((void*)this);
       m_pMain = (IUnknown *)m_pID3D11ClassInstance;
     }
+      m_pMain->AddRef();
   }
   ~WrappedID3D11ClassInstance() {
     out() << "// [DESTROY] ID3D11ClassInstance(0x" << this << " )\n";
@@ -5762,6 +5799,7 @@ private:
   IUnknown *m_pIUnknown;
   IUnknown *m_pMain;
 public:
+  bool CheckLifetime() { if (!m_pMain->Release()) { delete this; return false; } else { m_pMain->AddRef(); return true; } }
   template<typename T>
   WrappedID3D11ClassLinkage(T *pWrapped) {
     out() << "// [CREATE] ID3D11ClassLinkage(0x" << this << ", 0x" << pWrapped << " )\n";
@@ -5793,6 +5831,7 @@ public:
       wt[reinterpret_cast<size_t>((void*)m_pID3D11ClassLinkage)] = reinterpret_cast<size_t>((void*)this);
       m_pMain = (IUnknown *)m_pID3D11ClassLinkage;
     }
+      m_pMain->AddRef();
   }
   ~WrappedID3D11ClassLinkage() {
     out() << "// [DESTROY] ID3D11ClassLinkage(0x" << this << " )\n";
@@ -5860,6 +5899,7 @@ private:
   IUnknown *m_pIUnknown;
   IUnknown *m_pMain;
 public:
+  bool CheckLifetime() { if (!m_pMain->Release()) { delete this; return false; } else { m_pMain->AddRef(); return true; } }
   template<typename T>
   WrappedID3D11CommandList(T *pWrapped) {
     out() << "// [CREATE] ID3D11CommandList(0x" << this << ", 0x" << pWrapped << " )\n";
@@ -5891,6 +5931,7 @@ public:
       wt[reinterpret_cast<size_t>((void*)m_pID3D11CommandList)] = reinterpret_cast<size_t>((void*)this);
       m_pMain = (IUnknown *)m_pID3D11CommandList;
     }
+      m_pMain->AddRef();
   }
   ~WrappedID3D11CommandList() {
     out() << "// [DESTROY] ID3D11CommandList(0x" << this << " )\n";
@@ -5947,6 +5988,7 @@ private:
   IUnknown *m_pIUnknown;
   IUnknown *m_pMain;
 public:
+  bool CheckLifetime() { if (!m_pMain->Release()) { delete this; return false; } else { m_pMain->AddRef(); return true; } }
   template<typename T>
   WrappedID3D11VideoDecoder(T *pWrapped) {
     out() << "// [CREATE] ID3D11VideoDecoder(0x" << this << ", 0x" << pWrapped << " )\n";
@@ -5978,6 +6020,7 @@ public:
       wt[reinterpret_cast<size_t>((void*)m_pID3D11VideoDecoder)] = reinterpret_cast<size_t>((void*)this);
       m_pMain = (IUnknown *)m_pID3D11VideoDecoder;
     }
+      m_pMain->AddRef();
   }
   ~WrappedID3D11VideoDecoder() {
     out() << "// [DESTROY] ID3D11VideoDecoder(0x" << this << " )\n";
@@ -6040,6 +6083,7 @@ private:
   IUnknown *m_pIUnknown;
   IUnknown *m_pMain;
 public:
+  bool CheckLifetime() { if (!m_pMain->Release()) { delete this; return false; } else { m_pMain->AddRef(); return true; } }
   template<typename T>
   WrappedID3D11VideoProcessor(T *pWrapped) {
     out() << "// [CREATE] ID3D11VideoProcessor(0x" << this << ", 0x" << pWrapped << " )\n";
@@ -6071,6 +6115,7 @@ public:
       wt[reinterpret_cast<size_t>((void*)m_pID3D11VideoProcessor)] = reinterpret_cast<size_t>((void*)this);
       m_pMain = (IUnknown *)m_pID3D11VideoProcessor;
     }
+      m_pMain->AddRef();
   }
   ~WrappedID3D11VideoProcessor() {
     out() << "// [DESTROY] ID3D11VideoProcessor(0x" << this << " )\n";
@@ -6133,6 +6178,7 @@ private:
   IUnknown *m_pIUnknown;
   IUnknown *m_pMain;
 public:
+  bool CheckLifetime() { if (!m_pMain->Release()) { delete this; return false; } else { m_pMain->AddRef(); return true; } }
   template<typename T>
   WrappedID3D11AuthenticatedChannel(T *pWrapped) {
     out() << "// [CREATE] ID3D11AuthenticatedChannel(0x" << this << ", 0x" << pWrapped << " )\n";
@@ -6164,6 +6210,7 @@ public:
       wt[reinterpret_cast<size_t>((void*)m_pID3D11AuthenticatedChannel)] = reinterpret_cast<size_t>((void*)this);
       m_pMain = (IUnknown *)m_pID3D11AuthenticatedChannel;
     }
+      m_pMain->AddRef();
   }
   ~WrappedID3D11AuthenticatedChannel() {
     out() << "// [DESTROY] ID3D11AuthenticatedChannel(0x" << this << " )\n";
@@ -6232,6 +6279,7 @@ private:
   IUnknown *m_pIUnknown;
   IUnknown *m_pMain;
 public:
+  bool CheckLifetime() { if (!m_pMain->Release()) { delete this; return false; } else { m_pMain->AddRef(); return true; } }
   template<typename T>
   WrappedID3D11CryptoSession(T *pWrapped) {
     out() << "// [CREATE] ID3D11CryptoSession(0x" << this << ", 0x" << pWrapped << " )\n";
@@ -6263,6 +6311,7 @@ public:
       wt[reinterpret_cast<size_t>((void*)m_pID3D11CryptoSession)] = reinterpret_cast<size_t>((void*)this);
       m_pMain = (IUnknown *)m_pID3D11CryptoSession;
     }
+      m_pMain->AddRef();
   }
   ~WrappedID3D11CryptoSession() {
     out() << "// [DESTROY] ID3D11CryptoSession(0x" << this << " )\n";
@@ -6335,6 +6384,7 @@ private:
   IUnknown *m_pIUnknown;
   IUnknown *m_pMain;
 public:
+  bool CheckLifetime() { if (!m_pMain->Release()) { delete this; return false; } else { m_pMain->AddRef(); return true; } }
   template<typename T>
   WrappedID3D11VideoDecoderOutputView(T *pWrapped) {
     out() << "// [CREATE] ID3D11VideoDecoderOutputView(0x" << this << ", 0x" << pWrapped << " )\n";
@@ -6374,6 +6424,7 @@ public:
       wt[reinterpret_cast<size_t>((void*)m_pID3D11VideoDecoderOutputView)] = reinterpret_cast<size_t>((void*)this);
       m_pMain = (IUnknown *)m_pID3D11VideoDecoderOutputView;
     }
+      m_pMain->AddRef();
   }
   ~WrappedID3D11VideoDecoderOutputView() {
     out() << "// [DESTROY] ID3D11VideoDecoderOutputView(0x" << this << " )\n";
@@ -6438,6 +6489,7 @@ private:
   IUnknown *m_pIUnknown;
   IUnknown *m_pMain;
 public:
+  bool CheckLifetime() { if (!m_pMain->Release()) { delete this; return false; } else { m_pMain->AddRef(); return true; } }
   template<typename T>
   WrappedID3D11VideoProcessorInputView(T *pWrapped) {
     out() << "// [CREATE] ID3D11VideoProcessorInputView(0x" << this << ", 0x" << pWrapped << " )\n";
@@ -6477,6 +6529,7 @@ public:
       wt[reinterpret_cast<size_t>((void*)m_pID3D11VideoProcessorInputView)] = reinterpret_cast<size_t>((void*)this);
       m_pMain = (IUnknown *)m_pID3D11VideoProcessorInputView;
     }
+      m_pMain->AddRef();
   }
   ~WrappedID3D11VideoProcessorInputView() {
     out() << "// [DESTROY] ID3D11VideoProcessorInputView(0x" << this << " )\n";
@@ -6541,6 +6594,7 @@ private:
   IUnknown *m_pIUnknown;
   IUnknown *m_pMain;
 public:
+  bool CheckLifetime() { if (!m_pMain->Release()) { delete this; return false; } else { m_pMain->AddRef(); return true; } }
   template<typename T>
   WrappedID3D11VideoProcessorOutputView(T *pWrapped) {
     out() << "// [CREATE] ID3D11VideoProcessorOutputView(0x" << this << ", 0x" << pWrapped << " )\n";
@@ -6580,6 +6634,7 @@ public:
       wt[reinterpret_cast<size_t>((void*)m_pID3D11VideoProcessorOutputView)] = reinterpret_cast<size_t>((void*)this);
       m_pMain = (IUnknown *)m_pID3D11VideoProcessorOutputView;
     }
+      m_pMain->AddRef();
   }
   ~WrappedID3D11VideoProcessorOutputView() {
     out() << "// [DESTROY] ID3D11VideoProcessorOutputView(0x" << this << " )\n";
@@ -6648,6 +6703,7 @@ private:
   IUnknown *m_pIUnknown;
   IUnknown *m_pMain;
 public:
+  bool CheckLifetime() { if (!m_pMain->Release()) { delete this; return false; } else { m_pMain->AddRef(); return true; } }
   template<typename T>
   WrappedID3D11Debug(T *pWrapped) {
     out() << "// [CREATE] ID3D11Debug(0x" << this << ", 0x" << pWrapped << " )\n";
@@ -6671,6 +6727,7 @@ public:
       wt[reinterpret_cast<size_t>((void*)m_pID3D11Debug)] = reinterpret_cast<size_t>((void*)this);
       m_pMain = (IUnknown *)m_pID3D11Debug;
     }
+      m_pMain->AddRef();
   }
   ~WrappedID3D11Debug() {
     out() << "// [DESTROY] ID3D11Debug(0x" << this << " )\n";
@@ -6728,6 +6785,7 @@ private:
   IUnknown *m_pIUnknown;
   IUnknown *m_pMain;
 public:
+  bool CheckLifetime() { if (!m_pMain->Release()) { delete this; return false; } else { m_pMain->AddRef(); return true; } }
   template<typename T>
   WrappedID3D11SwitchToRef(T *pWrapped) {
     out() << "// [CREATE] ID3D11SwitchToRef(0x" << this << ", 0x" << pWrapped << " )\n";
@@ -6751,6 +6809,7 @@ public:
       wt[reinterpret_cast<size_t>((void*)m_pID3D11SwitchToRef)] = reinterpret_cast<size_t>((void*)this);
       m_pMain = (IUnknown *)m_pID3D11SwitchToRef;
     }
+      m_pMain->AddRef();
   }
   ~WrappedID3D11SwitchToRef() {
     out() << "// [DESTROY] ID3D11SwitchToRef(0x" << this << " )\n";
@@ -6789,6 +6848,7 @@ private:
   IUnknown *m_pIUnknown;
   IUnknown *m_pMain;
 public:
+  bool CheckLifetime() { if (!m_pMain->Release()) { delete this; return false; } else { m_pMain->AddRef(); return true; } }
   template<typename T>
   WrappedID3D11TracingDevice(T *pWrapped) {
     out() << "// [CREATE] ID3D11TracingDevice(0x" << this << ", 0x" << pWrapped << " )\n";
@@ -6812,6 +6872,7 @@ public:
       wt[reinterpret_cast<size_t>((void*)m_pID3D11TracingDevice)] = reinterpret_cast<size_t>((void*)this);
       m_pMain = (IUnknown *)m_pID3D11TracingDevice;
     }
+      m_pMain->AddRef();
   }
   ~WrappedID3D11TracingDevice() {
     out() << "// [DESTROY] ID3D11TracingDevice(0x" << this << " )\n";
@@ -6853,6 +6914,7 @@ private:
   IUnknown *m_pIUnknown;
   IUnknown *m_pMain;
 public:
+  bool CheckLifetime() { if (!m_pMain->Release()) { delete this; return false; } else { m_pMain->AddRef(); return true; } }
   template<typename T>
   WrappedID3D11RefTrackingOptions(T *pWrapped) {
     out() << "// [CREATE] ID3D11RefTrackingOptions(0x" << this << ", 0x" << pWrapped << " )\n";
@@ -6876,6 +6938,7 @@ public:
       wt[reinterpret_cast<size_t>((void*)m_pID3D11RefTrackingOptions)] = reinterpret_cast<size_t>((void*)this);
       m_pMain = (IUnknown *)m_pID3D11RefTrackingOptions;
     }
+      m_pMain->AddRef();
   }
   ~WrappedID3D11RefTrackingOptions() {
     out() << "// [DESTROY] ID3D11RefTrackingOptions(0x" << this << " )\n";
@@ -6912,6 +6975,7 @@ private:
   IUnknown *m_pIUnknown;
   IUnknown *m_pMain;
 public:
+  bool CheckLifetime() { if (!m_pMain->Release()) { delete this; return false; } else { m_pMain->AddRef(); return true; } }
   template<typename T>
   WrappedID3D11RefDefaultTrackingOptions(T *pWrapped) {
     out() << "// [CREATE] ID3D11RefDefaultTrackingOptions(0x" << this << ", 0x" << pWrapped << " )\n";
@@ -6935,6 +6999,7 @@ public:
       wt[reinterpret_cast<size_t>((void*)m_pID3D11RefDefaultTrackingOptions)] = reinterpret_cast<size_t>((void*)this);
       m_pMain = (IUnknown *)m_pID3D11RefDefaultTrackingOptions;
     }
+      m_pMain->AddRef();
   }
   ~WrappedID3D11RefDefaultTrackingOptions() {
     out() << "// [DESTROY] ID3D11RefDefaultTrackingOptions(0x" << this << " )\n";
@@ -7006,6 +7071,7 @@ private:
   IUnknown *m_pIUnknown;
   IUnknown *m_pMain;
 public:
+  bool CheckLifetime() { if (!m_pMain->Release()) { delete this; return false; } else { m_pMain->AddRef(); return true; } }
   template<typename T>
   WrappedID3D11InfoQueue(T *pWrapped) {
     out() << "// [CREATE] ID3D11InfoQueue(0x" << this << ", 0x" << pWrapped << " )\n";
@@ -7029,6 +7095,7 @@ public:
       wt[reinterpret_cast<size_t>((void*)m_pID3D11InfoQueue)] = reinterpret_cast<size_t>((void*)this);
       m_pMain = (IUnknown *)m_pID3D11InfoQueue;
     }
+      m_pMain->AddRef();
   }
   ~WrappedID3D11InfoQueue() {
     out() << "// [DESTROY] ID3D11InfoQueue(0x" << this << " )\n";
@@ -7143,6 +7210,7 @@ private:
   IUnknown *m_pIUnknown;
   IUnknown *m_pMain;
 public:
+  bool CheckLifetime() { if (!m_pMain->Release()) { delete this; return false; } else { m_pMain->AddRef(); return true; } }
   template<typename T>
   WrappedID3DDeviceContextState(T *pWrapped) {
     out() << "// [CREATE] ID3DDeviceContextState(0x" << this << ", 0x" << pWrapped << " )\n";
@@ -7174,6 +7242,7 @@ public:
       wt[reinterpret_cast<size_t>((void*)m_pID3DDeviceContextState)] = reinterpret_cast<size_t>((void*)this);
       m_pMain = (IUnknown *)m_pID3DDeviceContextState;
     }
+      m_pMain->AddRef();
   }
   ~WrappedID3DDeviceContextState() {
     out() << "// [DESTROY] ID3DDeviceContextState(0x" << this << " )\n";
@@ -7227,6 +7296,7 @@ private:
   IUnknown *m_pIUnknown;
   IUnknown *m_pMain;
 public:
+  bool CheckLifetime() { if (!m_pMain->Release()) { delete this; return false; } else { m_pMain->AddRef(); return true; } }
   template<typename T>
   WrappedIDXGIDisplayControl(T *pWrapped) {
     out() << "// [CREATE] IDXGIDisplayControl(0x" << this << ", 0x" << pWrapped << " )\n";
@@ -7250,6 +7320,7 @@ public:
       wt[reinterpret_cast<size_t>((void*)m_pIDXGIDisplayControl)] = reinterpret_cast<size_t>((void*)this);
       m_pMain = (IUnknown *)m_pIDXGIDisplayControl;
     }
+      m_pMain->AddRef();
   }
   ~WrappedIDXGIDisplayControl() {
     out() << "// [DESTROY] IDXGIDisplayControl(0x" << this << " )\n";
@@ -7296,6 +7367,7 @@ private:
   IUnknown *m_pIUnknown;
   IUnknown *m_pMain;
 public:
+  bool CheckLifetime() { if (!m_pMain->Release()) { delete this; return false; } else { m_pMain->AddRef(); return true; } }
   template<typename T>
   WrappedIDXGIOutputDuplication(T *pWrapped) {
     out() << "// [CREATE] IDXGIOutputDuplication(0x" << this << ", 0x" << pWrapped << " )\n";
@@ -7327,6 +7399,7 @@ public:
       wt[reinterpret_cast<size_t>((void*)m_pIDXGIOutputDuplication)] = reinterpret_cast<size_t>((void*)this);
       m_pMain = (IUnknown *)m_pIDXGIOutputDuplication;
     }
+      m_pMain->AddRef();
   }
   ~WrappedIDXGIOutputDuplication() {
     out() << "// [DESTROY] IDXGIOutputDuplication(0x" << this << " )\n";
@@ -7417,6 +7490,7 @@ private:
   IUnknown *m_pIUnknown;
   IUnknown *m_pMain;
 public:
+  bool CheckLifetime() { if (!m_pMain->Release()) { delete this; return false; } else { m_pMain->AddRef(); return true; } }
   template<typename T>
   WrappedIDXGISurface2(T *pWrapped) {
     out() << "// [CREATE] IDXGISurface2(0x" << this << ", 0x" << pWrapped << " )\n";
@@ -7472,6 +7546,7 @@ public:
       wt[reinterpret_cast<size_t>((void*)m_pIDXGISurface2)] = reinterpret_cast<size_t>((void*)this);
       m_pMain = (IUnknown *)m_pIDXGISurface2;
     }
+      m_pMain->AddRef();
   }
   ~WrappedIDXGISurface2() {
     out() << "// [DESTROY] IDXGISurface2(0x" << this << " )\n";
@@ -7562,6 +7637,7 @@ private:
   IUnknown *m_pIUnknown;
   IUnknown *m_pMain;
 public:
+  bool CheckLifetime() { if (!m_pMain->Release()) { delete this; return false; } else { m_pMain->AddRef(); return true; } }
   template<typename T>
   WrappedIDXGIResource1(T *pWrapped) {
     out() << "// [CREATE] IDXGIResource1(0x" << this << ", 0x" << pWrapped << " )\n";
@@ -7609,6 +7685,7 @@ public:
       wt[reinterpret_cast<size_t>((void*)m_pIDXGIResource1)] = reinterpret_cast<size_t>((void*)this);
       m_pMain = (IUnknown *)m_pIDXGIResource1;
     }
+      m_pMain->AddRef();
   }
   ~WrappedIDXGIResource1() {
     out() << "// [DESTROY] IDXGIResource1(0x" << this << " )\n";
@@ -7696,6 +7773,7 @@ private:
   IUnknown *m_pIUnknown;
   IUnknown *m_pMain;
 public:
+  bool CheckLifetime() { if (!m_pMain->Release()) { delete this; return false; } else { m_pMain->AddRef(); return true; } }
   template<typename T>
   WrappedID3D11BlendState1(T *pWrapped) {
     out() << "// [CREATE] ID3D11BlendState1(0x" << this << ", 0x" << pWrapped << " )\n";
@@ -7735,6 +7813,7 @@ public:
       wt[reinterpret_cast<size_t>((void*)m_pID3D11BlendState1)] = reinterpret_cast<size_t>((void*)this);
       m_pMain = (IUnknown *)m_pID3D11BlendState1;
     }
+      m_pMain->AddRef();
   }
   ~WrappedID3D11BlendState1() {
     out() << "// [DESTROY] ID3D11BlendState1(0x" << this << " )\n";
@@ -7799,6 +7878,7 @@ private:
   IUnknown *m_pIUnknown;
   IUnknown *m_pMain;
 public:
+  bool CheckLifetime() { if (!m_pMain->Release()) { delete this; return false; } else { m_pMain->AddRef(); return true; } }
   template<typename T>
   WrappedID3D11VideoProcessorEnumerator1(T *pWrapped) {
     out() << "// [CREATE] ID3D11VideoProcessorEnumerator1(0x" << this << ", 0x" << pWrapped << " )\n";
@@ -7838,6 +7918,7 @@ public:
       wt[reinterpret_cast<size_t>((void*)m_pID3D11VideoProcessorEnumerator1)] = reinterpret_cast<size_t>((void*)this);
       m_pMain = (IUnknown *)m_pID3D11VideoProcessorEnumerator1;
     }
+      m_pMain->AddRef();
   }
   ~WrappedID3D11VideoProcessorEnumerator1() {
     out() << "// [DESTROY] ID3D11VideoProcessorEnumerator1(0x" << this << " )\n";
@@ -7925,6 +8006,7 @@ private:
   IUnknown *m_pIUnknown;
   IUnknown *m_pMain;
 public:
+  bool CheckLifetime() { if (!m_pMain->Release()) { delete this; return false; } else { m_pMain->AddRef(); return true; } }
   template<typename T>
   WrappedID3DUserDefinedAnnotation(T *pWrapped) {
     out() << "// [CREATE] ID3DUserDefinedAnnotation(0x" << this << ", 0x" << pWrapped << " )\n";
@@ -7948,6 +8030,7 @@ public:
       wt[reinterpret_cast<size_t>((void*)m_pID3DUserDefinedAnnotation)] = reinterpret_cast<size_t>((void*)this);
       m_pMain = (IUnknown *)m_pID3DUserDefinedAnnotation;
     }
+      m_pMain->AddRef();
   }
   ~WrappedID3DUserDefinedAnnotation() {
     out() << "// [DESTROY] ID3DUserDefinedAnnotation(0x" << this << " )\n";
@@ -7997,6 +8080,7 @@ private:
   IUnknown *m_pIUnknown;
   IUnknown *m_pMain;
 public:
+  bool CheckLifetime() { if (!m_pMain->Release()) { delete this; return false; } else { m_pMain->AddRef(); return true; } }
   template<typename T>
   WrappedIDXGIDecodeSwapChain(T *pWrapped) {
     out() << "// [CREATE] IDXGIDecodeSwapChain(0x" << this << ", 0x" << pWrapped << " )\n";
@@ -8020,6 +8104,7 @@ public:
       wt[reinterpret_cast<size_t>((void*)m_pIDXGIDecodeSwapChain)] = reinterpret_cast<size_t>((void*)this);
       m_pMain = (IUnknown *)m_pIDXGIDecodeSwapChain;
     }
+      m_pMain->AddRef();
   }
   ~WrappedIDXGIDecodeSwapChain() {
     out() << "// [DESTROY] IDXGIDecodeSwapChain(0x" << this << " )\n";
@@ -8083,6 +8168,7 @@ private:
   IUnknown *m_pIUnknown;
   IUnknown *m_pMain;
 public:
+  bool CheckLifetime() { if (!m_pMain->Release()) { delete this; return false; } else { m_pMain->AddRef(); return true; } }
   template<typename T>
   WrappedIDXGIFactoryMedia(T *pWrapped) {
     out() << "// [CREATE] IDXGIFactoryMedia(0x" << this << ", 0x" << pWrapped << " )\n";
@@ -8106,6 +8192,7 @@ public:
       wt[reinterpret_cast<size_t>((void*)m_pIDXGIFactoryMedia)] = reinterpret_cast<size_t>((void*)this);
       m_pMain = (IUnknown *)m_pIDXGIFactoryMedia;
     }
+      m_pMain->AddRef();
   }
   ~WrappedIDXGIFactoryMedia() {
     out() << "// [DESTROY] IDXGIFactoryMedia(0x" << this << " )\n";
@@ -8156,6 +8243,7 @@ private:
   IUnknown *m_pIUnknown;
   IUnknown *m_pMain;
 public:
+  bool CheckLifetime() { if (!m_pMain->Release()) { delete this; return false; } else { m_pMain->AddRef(); return true; } }
   template<typename T>
   WrappedIDXGISwapChainMedia(T *pWrapped) {
     out() << "// [CREATE] IDXGISwapChainMedia(0x" << this << ", 0x" << pWrapped << " )\n";
@@ -8179,6 +8267,7 @@ public:
       wt[reinterpret_cast<size_t>((void*)m_pIDXGISwapChainMedia)] = reinterpret_cast<size_t>((void*)this);
       m_pMain = (IUnknown *)m_pIDXGISwapChainMedia;
     }
+      m_pMain->AddRef();
   }
   ~WrappedIDXGISwapChainMedia() {
     out() << "// [DESTROY] IDXGISwapChainMedia(0x" << this << " )\n";
@@ -8229,6 +8318,7 @@ private:
   IUnknown *m_pIUnknown;
   IUnknown *m_pMain;
 public:
+  bool CheckLifetime() { if (!m_pMain->Release()) { delete this; return false; } else { m_pMain->AddRef(); return true; } }
   template<typename T>
   WrappedID3D11Texture2D1(T *pWrapped) {
     out() << "// [CREATE] ID3D11Texture2D1(0x" << this << ", 0x" << pWrapped << " )\n";
@@ -8276,6 +8366,7 @@ public:
       wt[reinterpret_cast<size_t>((void*)m_pID3D11Texture2D1)] = reinterpret_cast<size_t>((void*)this);
       m_pMain = (IUnknown *)m_pID3D11Texture2D1;
     }
+      m_pMain->AddRef();
   }
   ~WrappedID3D11Texture2D1() {
     out() << "// [DESTROY] ID3D11Texture2D1(0x" << this << " )\n";
@@ -8351,6 +8442,7 @@ private:
   IUnknown *m_pIUnknown;
   IUnknown *m_pMain;
 public:
+  bool CheckLifetime() { if (!m_pMain->Release()) { delete this; return false; } else { m_pMain->AddRef(); return true; } }
   template<typename T>
   WrappedID3D11Texture3D1(T *pWrapped) {
     out() << "// [CREATE] ID3D11Texture3D1(0x" << this << ", 0x" << pWrapped << " )\n";
@@ -8398,6 +8490,7 @@ public:
       wt[reinterpret_cast<size_t>((void*)m_pID3D11Texture3D1)] = reinterpret_cast<size_t>((void*)this);
       m_pMain = (IUnknown *)m_pID3D11Texture3D1;
     }
+      m_pMain->AddRef();
   }
   ~WrappedID3D11Texture3D1() {
     out() << "// [DESTROY] ID3D11Texture3D1(0x" << this << " )\n";
@@ -8473,6 +8566,7 @@ private:
   IUnknown *m_pIUnknown;
   IUnknown *m_pMain;
 public:
+  bool CheckLifetime() { if (!m_pMain->Release()) { delete this; return false; } else { m_pMain->AddRef(); return true; } }
   template<typename T>
   WrappedID3D11RasterizerState2(T *pWrapped) {
     out() << "// [CREATE] ID3D11RasterizerState2(0x" << this << ", 0x" << pWrapped << " )\n";
@@ -8520,6 +8614,7 @@ public:
       wt[reinterpret_cast<size_t>((void*)m_pID3D11RasterizerState2)] = reinterpret_cast<size_t>((void*)this);
       m_pMain = (IUnknown *)m_pID3D11RasterizerState2;
     }
+      m_pMain->AddRef();
   }
   ~WrappedID3D11RasterizerState2() {
     out() << "// [DESTROY] ID3D11RasterizerState2(0x" << this << " )\n";
@@ -8591,6 +8686,7 @@ private:
   IUnknown *m_pIUnknown;
   IUnknown *m_pMain;
 public:
+  bool CheckLifetime() { if (!m_pMain->Release()) { delete this; return false; } else { m_pMain->AddRef(); return true; } }
   template<typename T>
   WrappedID3D11ShaderResourceView1(T *pWrapped) {
     out() << "// [CREATE] ID3D11ShaderResourceView1(0x" << this << ", 0x" << pWrapped << " )\n";
@@ -8638,6 +8734,7 @@ public:
       wt[reinterpret_cast<size_t>((void*)m_pID3D11ShaderResourceView1)] = reinterpret_cast<size_t>((void*)this);
       m_pMain = (IUnknown *)m_pID3D11ShaderResourceView1;
     }
+      m_pMain->AddRef();
   }
   ~WrappedID3D11ShaderResourceView1() {
     out() << "// [DESTROY] ID3D11ShaderResourceView1(0x" << this << " )\n";
@@ -8709,6 +8806,7 @@ private:
   IUnknown *m_pIUnknown;
   IUnknown *m_pMain;
 public:
+  bool CheckLifetime() { if (!m_pMain->Release()) { delete this; return false; } else { m_pMain->AddRef(); return true; } }
   template<typename T>
   WrappedID3D11RenderTargetView1(T *pWrapped) {
     out() << "// [CREATE] ID3D11RenderTargetView1(0x" << this << ", 0x" << pWrapped << " )\n";
@@ -8756,6 +8854,7 @@ public:
       wt[reinterpret_cast<size_t>((void*)m_pID3D11RenderTargetView1)] = reinterpret_cast<size_t>((void*)this);
       m_pMain = (IUnknown *)m_pID3D11RenderTargetView1;
     }
+      m_pMain->AddRef();
   }
   ~WrappedID3D11RenderTargetView1() {
     out() << "// [DESTROY] ID3D11RenderTargetView1(0x" << this << " )\n";
@@ -8827,6 +8926,7 @@ private:
   IUnknown *m_pIUnknown;
   IUnknown *m_pMain;
 public:
+  bool CheckLifetime() { if (!m_pMain->Release()) { delete this; return false; } else { m_pMain->AddRef(); return true; } }
   template<typename T>
   WrappedID3D11UnorderedAccessView1(T *pWrapped) {
     out() << "// [CREATE] ID3D11UnorderedAccessView1(0x" << this << ", 0x" << pWrapped << " )\n";
@@ -8874,6 +8974,7 @@ public:
       wt[reinterpret_cast<size_t>((void*)m_pID3D11UnorderedAccessView1)] = reinterpret_cast<size_t>((void*)this);
       m_pMain = (IUnknown *)m_pID3D11UnorderedAccessView1;
     }
+      m_pMain->AddRef();
   }
   ~WrappedID3D11UnorderedAccessView1() {
     out() << "// [DESTROY] ID3D11UnorderedAccessView1(0x" << this << " )\n";
@@ -8945,6 +9046,7 @@ private:
   IUnknown *m_pIUnknown;
   IUnknown *m_pMain;
 public:
+  bool CheckLifetime() { if (!m_pMain->Release()) { delete this; return false; } else { m_pMain->AddRef(); return true; } }
   template<typename T>
   WrappedID3D11Query1(T *pWrapped) {
     out() << "// [CREATE] ID3D11Query1(0x" << this << ", 0x" << pWrapped << " )\n";
@@ -8992,6 +9094,7 @@ public:
       wt[reinterpret_cast<size_t>((void*)m_pID3D11Query1)] = reinterpret_cast<size_t>((void*)this);
       m_pMain = (IUnknown *)m_pID3D11Query1;
     }
+      m_pMain->AddRef();
   }
   ~WrappedID3D11Query1() {
     out() << "// [DESTROY] ID3D11Query1(0x" << this << " )\n";
@@ -9059,6 +9162,7 @@ private:
   IUnknown *m_pIUnknown;
   IUnknown *m_pMain;
 public:
+  bool CheckLifetime() { if (!m_pMain->Release()) { delete this; return false; } else { m_pMain->AddRef(); return true; } }
   template<typename T>
   WrappedID3D11Fence(T *pWrapped) {
     out() << "// [CREATE] ID3D11Fence(0x" << this << ", 0x" << pWrapped << " )\n";
@@ -9090,6 +9194,7 @@ public:
       wt[reinterpret_cast<size_t>((void*)m_pID3D11Fence)] = reinterpret_cast<size_t>((void*)this);
       m_pMain = (IUnknown *)m_pID3D11Fence;
     }
+      m_pMain->AddRef();
   }
   ~WrappedID3D11Fence() {
     out() << "// [DESTROY] ID3D11Fence(0x" << this << " )\n";
@@ -9164,6 +9269,7 @@ private:
   IUnknown *m_pIUnknown;
   IUnknown *m_pMain;
 public:
+  bool CheckLifetime() { if (!m_pMain->Release()) { delete this; return false; } else { m_pMain->AddRef(); return true; } }
   template<typename T>
   WrappedID3D11DeviceContext4(T *pWrapped) {
     out() << "// [CREATE] ID3D11DeviceContext4(0x" << this << ", 0x" << pWrapped << " )\n";
@@ -9227,6 +9333,7 @@ public:
       wt[reinterpret_cast<size_t>((void*)m_pID3D11DeviceContext4)] = reinterpret_cast<size_t>((void*)this);
       m_pMain = (IUnknown *)m_pID3D11DeviceContext4;
     }
+      m_pMain->AddRef();
   }
   ~WrappedID3D11DeviceContext4() {
     out() << "// [DESTROY] ID3D11DeviceContext4(0x" << this << " )\n";
@@ -10004,6 +10111,7 @@ private:
   IUnknown *m_pIUnknown;
   IUnknown *m_pMain;
 public:
+  bool CheckLifetime() { if (!m_pMain->Release()) { delete this; return false; } else { m_pMain->AddRef(); return true; } }
   template<typename T>
   WrappedIDXGIAdapter3(T *pWrapped) {
     out() << "// [CREATE] IDXGIAdapter3(0x" << this << ", 0x" << pWrapped << " )\n";
@@ -10059,6 +10167,7 @@ public:
       wt[reinterpret_cast<size_t>((void*)m_pIDXGIAdapter3)] = reinterpret_cast<size_t>((void*)this);
       m_pMain = (IUnknown *)m_pIDXGIAdapter3;
     }
+      m_pMain->AddRef();
   }
   ~WrappedIDXGIAdapter3() {
     out() << "// [DESTROY] IDXGIAdapter3(0x" << this << " )\n";
@@ -10171,6 +10280,7 @@ private:
   IUnknown *m_pIUnknown;
   IUnknown *m_pMain;
 public:
+  bool CheckLifetime() { if (!m_pMain->Release()) { delete this; return false; } else { m_pMain->AddRef(); return true; } }
   template<typename T>
   WrappedIDXGIOutput5(T *pWrapped) {
     out() << "// [CREATE] IDXGIOutput5(0x" << this << ", 0x" << pWrapped << " )\n";
@@ -10242,6 +10352,7 @@ public:
       wt[reinterpret_cast<size_t>((void*)m_pIDXGIOutput5)] = reinterpret_cast<size_t>((void*)this);
       m_pMain = (IUnknown *)m_pIDXGIOutput5;
     }
+      m_pMain->AddRef();
   }
   ~WrappedIDXGIOutput5() {
     out() << "// [DESTROY] IDXGIOutput5(0x" << this << " )\n";
@@ -10392,6 +10503,7 @@ private:
   IUnknown *m_pIUnknown;
   IUnknown *m_pMain;
 public:
+  bool CheckLifetime() { if (!m_pMain->Release()) { delete this; return false; } else { m_pMain->AddRef(); return true; } }
   template<typename T>
   WrappedIDXGISwapChain4(T *pWrapped) {
     out() << "// [CREATE] IDXGISwapChain4(0x" << this << ", 0x" << pWrapped << " )\n";
@@ -10463,6 +10575,7 @@ public:
       wt[reinterpret_cast<size_t>((void*)m_pIDXGISwapChain4)] = reinterpret_cast<size_t>((void*)this);
       m_pMain = (IUnknown *)m_pIDXGISwapChain4;
     }
+      m_pMain->AddRef();
   }
   ~WrappedIDXGISwapChain4() {
     out() << "// [DESTROY] IDXGISwapChain4(0x" << this << " )\n";
@@ -10657,6 +10770,7 @@ private:
   IUnknown *m_pIUnknown;
   IUnknown *m_pMain;
 public:
+  bool CheckLifetime() { if (!m_pMain->Release()) { delete this; return false; } else { m_pMain->AddRef(); return true; } }
   template<typename T>
   WrappedIDXGIDevice4(T *pWrapped) {
     out() << "// [CREATE] IDXGIDevice4(0x" << this << ", 0x" << pWrapped << " )\n";
@@ -10720,6 +10834,7 @@ public:
       wt[reinterpret_cast<size_t>((void*)m_pIDXGIDevice4)] = reinterpret_cast<size_t>((void*)this);
       m_pMain = (IUnknown *)m_pIDXGIDevice4;
     }
+      m_pMain->AddRef();
   }
   ~WrappedIDXGIDevice4() {
     out() << "// [DESTROY] IDXGIDevice4(0x" << this << " )\n";
@@ -10845,6 +10960,7 @@ private:
   IUnknown *m_pIUnknown;
   IUnknown *m_pMain;
 public:
+  bool CheckLifetime() { if (!m_pMain->Release()) { delete this; return false; } else { m_pMain->AddRef(); return true; } }
   template<typename T>
   WrappedIDXGIFactory5(T *pWrapped) {
     out() << "// [CREATE] IDXGIFactory5(0x" << this << ", 0x" << pWrapped << " )\n";
@@ -10916,6 +11032,7 @@ public:
       wt[reinterpret_cast<size_t>((void*)m_pIDXGIFactory5)] = reinterpret_cast<size_t>((void*)this);
       m_pMain = (IUnknown *)m_pIDXGIFactory5;
     }
+      m_pMain->AddRef();
   }
   ~WrappedIDXGIFactory5() {
     out() << "// [DESTROY] IDXGIFactory5(0x" << this << " )\n";
@@ -11080,6 +11197,7 @@ private:
   IUnknown *m_pIUnknown;
   IUnknown *m_pMain;
 public:
+  bool CheckLifetime() { if (!m_pMain->Release()) { delete this; return false; } else { m_pMain->AddRef(); return true; } }
   template<typename T>
   WrappedID3D11Device5(T *pWrapped) {
     out() << "// [CREATE] ID3D11Device5(0x" << this << ", 0x" << pWrapped << " )\n";
@@ -11143,6 +11261,7 @@ public:
       wt[reinterpret_cast<size_t>((void*)m_pID3D11Device5)] = reinterpret_cast<size_t>((void*)this);
       m_pMain = (IUnknown *)m_pID3D11Device5;
     }
+      m_pMain->AddRef();
   }
   ~WrappedID3D11Device5() {
     out() << "// [DESTROY] ID3D11Device5(0x" << this << " )\n";
@@ -11506,6 +11625,7 @@ private:
   IUnknown *m_pIUnknown;
   IUnknown *m_pMain;
 public:
+  bool CheckLifetime() { if (!m_pMain->Release()) { delete this; return false; } else { m_pMain->AddRef(); return true; } }
   template<typename T>
   WrappedID3D11Multithread(T *pWrapped) {
     out() << "// [CREATE] ID3D11Multithread(0x" << this << ", 0x" << pWrapped << " )\n";
@@ -11529,6 +11649,7 @@ public:
       wt[reinterpret_cast<size_t>((void*)m_pID3D11Multithread)] = reinterpret_cast<size_t>((void*)this);
       m_pMain = (IUnknown *)m_pID3D11Multithread;
     }
+      m_pMain->AddRef();
   }
   ~WrappedID3D11Multithread() {
     out() << "// [DESTROY] ID3D11Multithread(0x" << this << " )\n";
@@ -11573,6 +11694,7 @@ private:
   IUnknown *m_pIUnknown;
   IUnknown *m_pMain;
 public:
+  bool CheckLifetime() { if (!m_pMain->Release()) { delete this; return false; } else { m_pMain->AddRef(); return true; } }
   template<typename T>
   WrappedID3D11VideoDevice2(T *pWrapped) {
     out() << "// [CREATE] ID3D11VideoDevice2(0x" << this << ", 0x" << pWrapped << " )\n";
@@ -11612,6 +11734,7 @@ public:
       wt[reinterpret_cast<size_t>((void*)m_pID3D11VideoDevice2)] = reinterpret_cast<size_t>((void*)this);
       m_pMain = (IUnknown *)m_pID3D11VideoDevice2;
     }
+      m_pMain->AddRef();
   }
   ~WrappedID3D11VideoDevice2() {
     out() << "// [DESTROY] ID3D11VideoDevice2(0x" << this << " )\n";
@@ -11781,6 +11904,7 @@ private:
   IUnknown *m_pIUnknown;
   IUnknown *m_pMain;
 public:
+  bool CheckLifetime() { if (!m_pMain->Release()) { delete this; return false; } else { m_pMain->AddRef(); return true; } }
   template<typename T>
   WrappedID3D11VideoContext3(T *pWrapped) {
     out() << "// [CREATE] ID3D11VideoContext3(0x" << this << ", 0x" << pWrapped << " )\n";
@@ -11836,6 +11960,7 @@ public:
       wt[reinterpret_cast<size_t>((void*)m_pID3D11VideoContext3)] = reinterpret_cast<size_t>((void*)this);
       m_pMain = (IUnknown *)m_pID3D11VideoContext3;
     }
+      m_pMain->AddRef();
   }
   ~WrappedID3D11VideoContext3() {
     out() << "// [DESTROY] ID3D11VideoContext3(0x" << this << " )\n";
@@ -12351,6 +12476,7 @@ class WrappedID3D11ShaderReflectionType : public ID3D11ShaderReflectionType {
 private:
   ID3D11ShaderReflectionType *m_pID3D11ShaderReflectionType;
 public:
+  bool CheckLifetime() { return true; }
   template<typename T>
   WrappedID3D11ShaderReflectionType(T *pWrapped) {
     out() << "// [CREATE] ID3D11ShaderReflectionType(0x" << this << ", 0x" << pWrapped << " )\n";
@@ -12411,6 +12537,7 @@ class WrappedID3D11ShaderReflectionVariable : public ID3D11ShaderReflectionVaria
 private:
   ID3D11ShaderReflectionVariable *m_pID3D11ShaderReflectionVariable;
 public:
+  bool CheckLifetime() { return true; }
   template<typename T>
   WrappedID3D11ShaderReflectionVariable(T *pWrapped) {
     out() << "// [CREATE] ID3D11ShaderReflectionVariable(0x" << this << ", 0x" << pWrapped << " )\n";
@@ -12451,6 +12578,7 @@ class WrappedID3D11ShaderReflectionConstantBuffer : public ID3D11ShaderReflectio
 private:
   ID3D11ShaderReflectionConstantBuffer *m_pID3D11ShaderReflectionConstantBuffer;
 public:
+  bool CheckLifetime() { return true; }
   template<typename T>
   WrappedID3D11ShaderReflectionConstantBuffer(T *pWrapped) {
     out() << "// [CREATE] ID3D11ShaderReflectionConstantBuffer(0x" << this << ", 0x" << pWrapped << " )\n";
@@ -12514,6 +12642,7 @@ private:
   IUnknown *m_pIUnknown;
   IUnknown *m_pMain;
 public:
+  bool CheckLifetime() { if (!m_pMain->Release()) { delete this; return false; } else { m_pMain->AddRef(); return true; } }
   template<typename T>
   WrappedID3D11ShaderReflection(T *pWrapped) {
     out() << "// [CREATE] ID3D11ShaderReflection(0x" << this << ", 0x" << pWrapped << " )\n";
@@ -12537,6 +12666,7 @@ public:
       wt[reinterpret_cast<size_t>((void*)m_pID3D11ShaderReflection)] = reinterpret_cast<size_t>((void*)this);
       m_pMain = (IUnknown *)m_pID3D11ShaderReflection;
     }
+      m_pMain->AddRef();
   }
   ~WrappedID3D11ShaderReflection() {
     out() << "// [DESTROY] ID3D11ShaderReflection(0x" << this << " )\n";
@@ -12622,6 +12752,7 @@ private:
   IUnknown *m_pIUnknown;
   IUnknown *m_pMain;
 public:
+  bool CheckLifetime() { if (!m_pMain->Release()) { delete this; return false; } else { m_pMain->AddRef(); return true; } }
   template<typename T>
   WrappedID3D11LibraryReflection(T *pWrapped) {
     out() << "// [CREATE] ID3D11LibraryReflection(0x" << this << ", 0x" << pWrapped << " )\n";
@@ -12645,6 +12776,7 @@ public:
       wt[reinterpret_cast<size_t>((void*)m_pID3D11LibraryReflection)] = reinterpret_cast<size_t>((void*)this);
       m_pMain = (IUnknown *)m_pID3D11LibraryReflection;
     }
+      m_pMain->AddRef();
   }
   ~WrappedID3D11LibraryReflection() {
     out() << "// [DESTROY] ID3D11LibraryReflection(0x" << this << " )\n";
@@ -12687,6 +12819,7 @@ class WrappedID3D11FunctionReflection : public ID3D11FunctionReflection {
 private:
   ID3D11FunctionReflection *m_pID3D11FunctionReflection;
 public:
+  bool CheckLifetime() { return true; }
   template<typename T>
   WrappedID3D11FunctionReflection(T *pWrapped) {
     out() << "// [CREATE] ID3D11FunctionReflection(0x" << this << ", 0x" << pWrapped << " )\n";
@@ -12740,6 +12873,7 @@ class WrappedID3D11FunctionParameterReflection : public ID3D11FunctionParameterR
 private:
   ID3D11FunctionParameterReflection *m_pID3D11FunctionParameterReflection;
 public:
+  bool CheckLifetime() { return true; }
   template<typename T>
   WrappedID3D11FunctionParameterReflection(T *pWrapped) {
     out() << "// [CREATE] ID3D11FunctionParameterReflection(0x" << this << ", 0x" << pWrapped << " )\n";
@@ -12779,6 +12913,7 @@ private:
   IUnknown *m_pIUnknown;
   IUnknown *m_pMain;
 public:
+  bool CheckLifetime() { if (!m_pMain->Release()) { delete this; return false; } else { m_pMain->AddRef(); return true; } }
   template<typename T>
   WrappedID3D11Module(T *pWrapped) {
     out() << "// [CREATE] ID3D11Module(0x" << this << ", 0x" << pWrapped << " )\n";
@@ -12802,6 +12937,7 @@ public:
       wt[reinterpret_cast<size_t>((void*)m_pID3D11Module)] = reinterpret_cast<size_t>((void*)this);
       m_pMain = (IUnknown *)m_pID3D11Module;
     }
+      m_pMain->AddRef();
   }
   ~WrappedID3D11Module() {
     out() << "// [DESTROY] ID3D11Module(0x" << this << " )\n";
@@ -12851,6 +12987,7 @@ private:
   IUnknown *m_pIUnknown;
   IUnknown *m_pMain;
 public:
+  bool CheckLifetime() { if (!m_pMain->Release()) { delete this; return false; } else { m_pMain->AddRef(); return true; } }
   template<typename T>
   WrappedID3D11ModuleInstance(T *pWrapped) {
     out() << "// [CREATE] ID3D11ModuleInstance(0x" << this << ", 0x" << pWrapped << " )\n";
@@ -12874,6 +13011,7 @@ public:
       wt[reinterpret_cast<size_t>((void*)m_pID3D11ModuleInstance)] = reinterpret_cast<size_t>((void*)this);
       m_pMain = (IUnknown *)m_pID3D11ModuleInstance;
     }
+      m_pMain->AddRef();
   }
   ~WrappedID3D11ModuleInstance() {
     out() << "// [DESTROY] ID3D11ModuleInstance(0x" << this << " )\n";
@@ -12962,6 +13100,7 @@ private:
   IUnknown *m_pIUnknown;
   IUnknown *m_pMain;
 public:
+  bool CheckLifetime() { if (!m_pMain->Release()) { delete this; return false; } else { m_pMain->AddRef(); return true; } }
   template<typename T>
   WrappedID3D11Linker(T *pWrapped) {
     out() << "// [CREATE] ID3D11Linker(0x" << this << ", 0x" << pWrapped << " )\n";
@@ -12985,6 +13124,7 @@ public:
       wt[reinterpret_cast<size_t>((void*)m_pID3D11Linker)] = reinterpret_cast<size_t>((void*)this);
       m_pMain = (IUnknown *)m_pID3D11Linker;
     }
+      m_pMain->AddRef();
   }
   ~WrappedID3D11Linker() {
     out() << "// [DESTROY] ID3D11Linker(0x" << this << " )\n";
@@ -13035,6 +13175,7 @@ private:
   IUnknown *m_pIUnknown;
   IUnknown *m_pMain;
 public:
+  bool CheckLifetime() { if (!m_pMain->Release()) { delete this; return false; } else { m_pMain->AddRef(); return true; } }
   template<typename T>
   WrappedID3D11LinkingNode(T *pWrapped) {
     out() << "// [CREATE] ID3D11LinkingNode(0x" << this << ", 0x" << pWrapped << " )\n";
@@ -13058,6 +13199,7 @@ public:
       wt[reinterpret_cast<size_t>((void*)m_pID3D11LinkingNode)] = reinterpret_cast<size_t>((void*)this);
       m_pMain = (IUnknown *)m_pID3D11LinkingNode;
     }
+      m_pMain->AddRef();
   }
   ~WrappedID3D11LinkingNode() {
     out() << "// [DESTROY] ID3D11LinkingNode(0x" << this << " )\n";
@@ -13101,6 +13243,7 @@ private:
   IUnknown *m_pIUnknown;
   IUnknown *m_pMain;
 public:
+  bool CheckLifetime() { if (!m_pMain->Release()) { delete this; return false; } else { m_pMain->AddRef(); return true; } }
   template<typename T>
   WrappedID3D11FunctionLinkingGraph(T *pWrapped) {
     out() << "// [CREATE] ID3D11FunctionLinkingGraph(0x" << this << ", 0x" << pWrapped << " )\n";
@@ -13124,6 +13267,7 @@ public:
       wt[reinterpret_cast<size_t>((void*)m_pID3D11FunctionLinkingGraph)] = reinterpret_cast<size_t>((void*)this);
       m_pMain = (IUnknown *)m_pID3D11FunctionLinkingGraph;
     }
+      m_pMain->AddRef();
   }
   ~WrappedID3D11FunctionLinkingGraph() {
     out() << "// [DESTROY] ID3D11FunctionLinkingGraph(0x" << this << " )\n";
@@ -13205,6 +13349,7 @@ class WrappedID3D12ShaderReflectionType : public ID3D12ShaderReflectionType {
 private:
   ID3D12ShaderReflectionType *m_pID3D12ShaderReflectionType;
 public:
+  bool CheckLifetime() { return true; }
   template<typename T>
   WrappedID3D12ShaderReflectionType(T *pWrapped) {
     out() << "// [CREATE] ID3D12ShaderReflectionType(0x" << this << ", 0x" << pWrapped << " )\n";
@@ -13265,6 +13410,7 @@ class WrappedID3D12ShaderReflectionVariable : public ID3D12ShaderReflectionVaria
 private:
   ID3D12ShaderReflectionVariable *m_pID3D12ShaderReflectionVariable;
 public:
+  bool CheckLifetime() { return true; }
   template<typename T>
   WrappedID3D12ShaderReflectionVariable(T *pWrapped) {
     out() << "// [CREATE] ID3D12ShaderReflectionVariable(0x" << this << ", 0x" << pWrapped << " )\n";
@@ -13305,6 +13451,7 @@ class WrappedID3D12ShaderReflectionConstantBuffer : public ID3D12ShaderReflectio
 private:
   ID3D12ShaderReflectionConstantBuffer *m_pID3D12ShaderReflectionConstantBuffer;
 public:
+  bool CheckLifetime() { return true; }
   template<typename T>
   WrappedID3D12ShaderReflectionConstantBuffer(T *pWrapped) {
     out() << "// [CREATE] ID3D12ShaderReflectionConstantBuffer(0x" << this << ", 0x" << pWrapped << " )\n";
@@ -13368,6 +13515,7 @@ private:
   IUnknown *m_pIUnknown;
   IUnknown *m_pMain;
 public:
+  bool CheckLifetime() { if (!m_pMain->Release()) { delete this; return false; } else { m_pMain->AddRef(); return true; } }
   template<typename T>
   WrappedID3D12ShaderReflection(T *pWrapped) {
     out() << "// [CREATE] ID3D12ShaderReflection(0x" << this << ", 0x" << pWrapped << " )\n";
@@ -13391,6 +13539,7 @@ public:
       wt[reinterpret_cast<size_t>((void*)m_pID3D12ShaderReflection)] = reinterpret_cast<size_t>((void*)this);
       m_pMain = (IUnknown *)m_pID3D12ShaderReflection;
     }
+      m_pMain->AddRef();
   }
   ~WrappedID3D12ShaderReflection() {
     out() << "// [DESTROY] ID3D12ShaderReflection(0x" << this << " )\n";
@@ -13476,6 +13625,7 @@ private:
   IUnknown *m_pIUnknown;
   IUnknown *m_pMain;
 public:
+  bool CheckLifetime() { if (!m_pMain->Release()) { delete this; return false; } else { m_pMain->AddRef(); return true; } }
   template<typename T>
   WrappedID3D12LibraryReflection(T *pWrapped) {
     out() << "// [CREATE] ID3D12LibraryReflection(0x" << this << ", 0x" << pWrapped << " )\n";
@@ -13499,6 +13649,7 @@ public:
       wt[reinterpret_cast<size_t>((void*)m_pID3D12LibraryReflection)] = reinterpret_cast<size_t>((void*)this);
       m_pMain = (IUnknown *)m_pID3D12LibraryReflection;
     }
+      m_pMain->AddRef();
   }
   ~WrappedID3D12LibraryReflection() {
     out() << "// [DESTROY] ID3D12LibraryReflection(0x" << this << " )\n";
@@ -13541,6 +13692,7 @@ class WrappedID3D12FunctionReflection : public ID3D12FunctionReflection {
 private:
   ID3D12FunctionReflection *m_pID3D12FunctionReflection;
 public:
+  bool CheckLifetime() { return true; }
   template<typename T>
   WrappedID3D12FunctionReflection(T *pWrapped) {
     out() << "// [CREATE] ID3D12FunctionReflection(0x" << this << ", 0x" << pWrapped << " )\n";
@@ -13594,6 +13746,7 @@ class WrappedID3D12FunctionParameterReflection : public ID3D12FunctionParameterR
 private:
   ID3D12FunctionParameterReflection *m_pID3D12FunctionParameterReflection;
 public:
+  bool CheckLifetime() { return true; }
   template<typename T>
   WrappedID3D12FunctionParameterReflection(T *pWrapped) {
     out() << "// [CREATE] ID3D12FunctionParameterReflection(0x" << this << ", 0x" << pWrapped << " )\n";
@@ -13834,12 +13987,12 @@ ULONG __stdcall WrappedIDXGIKeyedMutex::AddRef() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->AddRef();
+  auto ret = m_pMain->AddRef() - 1;
   if (recursionFlag) {
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "AddRef", &ret, {
   });
   return ret;
@@ -13849,16 +14002,16 @@ ULONG __stdcall WrappedIDXGIKeyedMutex::Release() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->Release();
+  auto ret = m_pMain->Release() - 1;
   if (recursionFlag) {
-    if (!ret) delete this;
+    if (!ret) { m_pMain->Release(); delete this;}
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "Release", &ret, {
   });
-  if (!ret) delete this;
+  if (!ret) { m_pMain->Release(); delete this;}
   return ret;
 }
 LPVOID __stdcall WrappedID3D10Blob::GetBufferPointer() {
@@ -13927,12 +14080,12 @@ ULONG __stdcall WrappedID3D10Blob::AddRef() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->AddRef();
+  auto ret = m_pMain->AddRef() - 1;
   if (recursionFlag) {
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "AddRef", &ret, {
   });
   return ret;
@@ -13942,16 +14095,16 @@ ULONG __stdcall WrappedID3D10Blob::Release() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->Release();
+  auto ret = m_pMain->Release() - 1;
   if (recursionFlag) {
-    if (!ret) delete this;
+    if (!ret) { m_pMain->Release(); delete this;}
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "Release", &ret, {
   });
-  if (!ret) delete this;
+  if (!ret) { m_pMain->Release(); delete this;}
   return ret;
 }
 HRESULT __stdcall WrappedID3DDestructionNotifier::RegisterDestructionCallback(
@@ -14041,12 +14194,12 @@ ULONG __stdcall WrappedID3DDestructionNotifier::AddRef() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->AddRef();
+  auto ret = m_pMain->AddRef() - 1;
   if (recursionFlag) {
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "AddRef", &ret, {
   });
   return ret;
@@ -14056,16 +14209,16 @@ ULONG __stdcall WrappedID3DDestructionNotifier::Release() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->Release();
+  auto ret = m_pMain->Release() - 1;
   if (recursionFlag) {
-    if (!ret) delete this;
+    if (!ret) { m_pMain->Release(); delete this;}
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "Release", &ret, {
   });
-  if (!ret) delete this;
+  if (!ret) { m_pMain->Release(); delete this;}
   return ret;
 }
 HRESULT __stdcall WrappedID3DInclude::Open(
@@ -14280,12 +14433,12 @@ ULONG __stdcall WrappedID3D11DepthStencilState::AddRef() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->AddRef();
+  auto ret = m_pMain->AddRef() - 1;
   if (recursionFlag) {
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "AddRef", &ret, {
   });
   return ret;
@@ -14295,16 +14448,16 @@ ULONG __stdcall WrappedID3D11DepthStencilState::Release() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->Release();
+  auto ret = m_pMain->Release() - 1;
   if (recursionFlag) {
-    if (!ret) delete this;
+    if (!ret) { m_pMain->Release(); delete this;}
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "Release", &ret, {
   });
-  if (!ret) delete this;
+  if (!ret) { m_pMain->Release(); delete this;}
   return ret;
 }
 void __stdcall WrappedID3D11Buffer::GetDesc(
@@ -14515,12 +14668,12 @@ ULONG __stdcall WrappedID3D11Buffer::AddRef() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->AddRef();
+  auto ret = m_pMain->AddRef() - 1;
   if (recursionFlag) {
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "AddRef", &ret, {
   });
   return ret;
@@ -14530,16 +14683,16 @@ ULONG __stdcall WrappedID3D11Buffer::Release() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->Release();
+  auto ret = m_pMain->Release() - 1;
   if (recursionFlag) {
-    if (!ret) delete this;
+    if (!ret) { m_pMain->Release(); delete this;}
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "Release", &ret, {
   });
-  if (!ret) delete this;
+  if (!ret) { m_pMain->Release(); delete this;}
   return ret;
 }
 void __stdcall WrappedID3D11Texture1D::GetDesc(
@@ -14750,12 +14903,12 @@ ULONG __stdcall WrappedID3D11Texture1D::AddRef() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->AddRef();
+  auto ret = m_pMain->AddRef() - 1;
   if (recursionFlag) {
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "AddRef", &ret, {
   });
   return ret;
@@ -14765,16 +14918,16 @@ ULONG __stdcall WrappedID3D11Texture1D::Release() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->Release();
+  auto ret = m_pMain->Release() - 1;
   if (recursionFlag) {
-    if (!ret) delete this;
+    if (!ret) { m_pMain->Release(); delete this;}
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "Release", &ret, {
   });
-  if (!ret) delete this;
+  if (!ret) { m_pMain->Release(); delete this;}
   return ret;
 }
 void __stdcall WrappedID3D11DepthStencilView::GetDesc(
@@ -14958,12 +15111,12 @@ ULONG __stdcall WrappedID3D11DepthStencilView::AddRef() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->AddRef();
+  auto ret = m_pMain->AddRef() - 1;
   if (recursionFlag) {
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "AddRef", &ret, {
   });
   return ret;
@@ -14973,16 +15126,16 @@ ULONG __stdcall WrappedID3D11DepthStencilView::Release() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->Release();
+  auto ret = m_pMain->Release() - 1;
   if (recursionFlag) {
-    if (!ret) delete this;
+    if (!ret) { m_pMain->Release(); delete this;}
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "Release", &ret, {
   });
-  if (!ret) delete this;
+  if (!ret) { m_pMain->Release(); delete this;}
   return ret;
 }
 void __stdcall WrappedID3D11VertexShader::GetDevice(
@@ -15126,12 +15279,12 @@ ULONG __stdcall WrappedID3D11VertexShader::AddRef() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->AddRef();
+  auto ret = m_pMain->AddRef() - 1;
   if (recursionFlag) {
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "AddRef", &ret, {
   });
   return ret;
@@ -15141,16 +15294,16 @@ ULONG __stdcall WrappedID3D11VertexShader::Release() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->Release();
+  auto ret = m_pMain->Release() - 1;
   if (recursionFlag) {
-    if (!ret) delete this;
+    if (!ret) { m_pMain->Release(); delete this;}
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "Release", &ret, {
   });
-  if (!ret) delete this;
+  if (!ret) { m_pMain->Release(); delete this;}
   return ret;
 }
 void __stdcall WrappedID3D11HullShader::GetDevice(
@@ -15294,12 +15447,12 @@ ULONG __stdcall WrappedID3D11HullShader::AddRef() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->AddRef();
+  auto ret = m_pMain->AddRef() - 1;
   if (recursionFlag) {
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "AddRef", &ret, {
   });
   return ret;
@@ -15309,16 +15462,16 @@ ULONG __stdcall WrappedID3D11HullShader::Release() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->Release();
+  auto ret = m_pMain->Release() - 1;
   if (recursionFlag) {
-    if (!ret) delete this;
+    if (!ret) { m_pMain->Release(); delete this;}
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "Release", &ret, {
   });
-  if (!ret) delete this;
+  if (!ret) { m_pMain->Release(); delete this;}
   return ret;
 }
 void __stdcall WrappedID3D11DomainShader::GetDevice(
@@ -15462,12 +15615,12 @@ ULONG __stdcall WrappedID3D11DomainShader::AddRef() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->AddRef();
+  auto ret = m_pMain->AddRef() - 1;
   if (recursionFlag) {
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "AddRef", &ret, {
   });
   return ret;
@@ -15477,16 +15630,16 @@ ULONG __stdcall WrappedID3D11DomainShader::Release() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->Release();
+  auto ret = m_pMain->Release() - 1;
   if (recursionFlag) {
-    if (!ret) delete this;
+    if (!ret) { m_pMain->Release(); delete this;}
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "Release", &ret, {
   });
-  if (!ret) delete this;
+  if (!ret) { m_pMain->Release(); delete this;}
   return ret;
 }
 void __stdcall WrappedID3D11GeometryShader::GetDevice(
@@ -15630,12 +15783,12 @@ ULONG __stdcall WrappedID3D11GeometryShader::AddRef() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->AddRef();
+  auto ret = m_pMain->AddRef() - 1;
   if (recursionFlag) {
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "AddRef", &ret, {
   });
   return ret;
@@ -15645,16 +15798,16 @@ ULONG __stdcall WrappedID3D11GeometryShader::Release() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->Release();
+  auto ret = m_pMain->Release() - 1;
   if (recursionFlag) {
-    if (!ret) delete this;
+    if (!ret) { m_pMain->Release(); delete this;}
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "Release", &ret, {
   });
-  if (!ret) delete this;
+  if (!ret) { m_pMain->Release(); delete this;}
   return ret;
 }
 void __stdcall WrappedID3D11PixelShader::GetDevice(
@@ -15798,12 +15951,12 @@ ULONG __stdcall WrappedID3D11PixelShader::AddRef() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->AddRef();
+  auto ret = m_pMain->AddRef() - 1;
   if (recursionFlag) {
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "AddRef", &ret, {
   });
   return ret;
@@ -15813,16 +15966,16 @@ ULONG __stdcall WrappedID3D11PixelShader::Release() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->Release();
+  auto ret = m_pMain->Release() - 1;
   if (recursionFlag) {
-    if (!ret) delete this;
+    if (!ret) { m_pMain->Release(); delete this;}
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "Release", &ret, {
   });
-  if (!ret) delete this;
+  if (!ret) { m_pMain->Release(); delete this;}
   return ret;
 }
 void __stdcall WrappedID3D11ComputeShader::GetDevice(
@@ -15966,12 +16119,12 @@ ULONG __stdcall WrappedID3D11ComputeShader::AddRef() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->AddRef();
+  auto ret = m_pMain->AddRef() - 1;
   if (recursionFlag) {
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "AddRef", &ret, {
   });
   return ret;
@@ -15981,16 +16134,16 @@ ULONG __stdcall WrappedID3D11ComputeShader::Release() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->Release();
+  auto ret = m_pMain->Release() - 1;
   if (recursionFlag) {
-    if (!ret) delete this;
+    if (!ret) { m_pMain->Release(); delete this;}
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "Release", &ret, {
   });
-  if (!ret) delete this;
+  if (!ret) { m_pMain->Release(); delete this;}
   return ret;
 }
 void __stdcall WrappedID3D11InputLayout::GetDevice(
@@ -16134,12 +16287,12 @@ ULONG __stdcall WrappedID3D11InputLayout::AddRef() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->AddRef();
+  auto ret = m_pMain->AddRef() - 1;
   if (recursionFlag) {
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "AddRef", &ret, {
   });
   return ret;
@@ -16149,16 +16302,16 @@ ULONG __stdcall WrappedID3D11InputLayout::Release() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->Release();
+  auto ret = m_pMain->Release() - 1;
   if (recursionFlag) {
-    if (!ret) delete this;
+    if (!ret) { m_pMain->Release(); delete this;}
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "Release", &ret, {
   });
-  if (!ret) delete this;
+  if (!ret) { m_pMain->Release(); delete this;}
   return ret;
 }
 void __stdcall WrappedID3D11SamplerState::GetDesc(
@@ -16319,12 +16472,12 @@ ULONG __stdcall WrappedID3D11SamplerState::AddRef() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->AddRef();
+  auto ret = m_pMain->AddRef() - 1;
   if (recursionFlag) {
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "AddRef", &ret, {
   });
   return ret;
@@ -16334,16 +16487,16 @@ ULONG __stdcall WrappedID3D11SamplerState::Release() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->Release();
+  auto ret = m_pMain->Release() - 1;
   if (recursionFlag) {
-    if (!ret) delete this;
+    if (!ret) { m_pMain->Release(); delete this;}
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "Release", &ret, {
   });
-  if (!ret) delete this;
+  if (!ret) { m_pMain->Release(); delete this;}
   return ret;
 }
 void __stdcall WrappedID3D11Predicate::GetDesc(
@@ -16524,12 +16677,12 @@ ULONG __stdcall WrappedID3D11Predicate::AddRef() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->AddRef();
+  auto ret = m_pMain->AddRef() - 1;
   if (recursionFlag) {
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "AddRef", &ret, {
   });
   return ret;
@@ -16539,16 +16692,16 @@ ULONG __stdcall WrappedID3D11Predicate::Release() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->Release();
+  auto ret = m_pMain->Release() - 1;
   if (recursionFlag) {
-    if (!ret) delete this;
+    if (!ret) { m_pMain->Release(); delete this;}
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "Release", &ret, {
   });
-  if (!ret) delete this;
+  if (!ret) { m_pMain->Release(); delete this;}
   return ret;
 }
 void __stdcall WrappedID3D11Counter::GetDesc(
@@ -16725,12 +16878,12 @@ ULONG __stdcall WrappedID3D11Counter::AddRef() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->AddRef();
+  auto ret = m_pMain->AddRef() - 1;
   if (recursionFlag) {
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "AddRef", &ret, {
   });
   return ret;
@@ -16740,16 +16893,16 @@ ULONG __stdcall WrappedID3D11Counter::Release() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->Release();
+  auto ret = m_pMain->Release() - 1;
   if (recursionFlag) {
-    if (!ret) delete this;
+    if (!ret) { m_pMain->Release(); delete this;}
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "Release", &ret, {
   });
-  if (!ret) delete this;
+  if (!ret) { m_pMain->Release(); delete this;}
   return ret;
 }
 void __stdcall WrappedID3D11ClassInstance::GetClassLinkage(
@@ -16972,12 +17125,12 @@ ULONG __stdcall WrappedID3D11ClassInstance::AddRef() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->AddRef();
+  auto ret = m_pMain->AddRef() - 1;
   if (recursionFlag) {
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "AddRef", &ret, {
   });
   return ret;
@@ -16987,16 +17140,16 @@ ULONG __stdcall WrappedID3D11ClassInstance::Release() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->Release();
+  auto ret = m_pMain->Release() - 1;
   if (recursionFlag) {
-    if (!ret) delete this;
+    if (!ret) { m_pMain->Release(); delete this;}
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "Release", &ret, {
   });
-  if (!ret) delete this;
+  if (!ret) { m_pMain->Release(); delete this;}
   return ret;
 }
 HRESULT __stdcall WrappedID3D11ClassLinkage::GetClassInstance(
@@ -17206,12 +17359,12 @@ ULONG __stdcall WrappedID3D11ClassLinkage::AddRef() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->AddRef();
+  auto ret = m_pMain->AddRef() - 1;
   if (recursionFlag) {
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "AddRef", &ret, {
   });
   return ret;
@@ -17221,16 +17374,16 @@ ULONG __stdcall WrappedID3D11ClassLinkage::Release() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->Release();
+  auto ret = m_pMain->Release() - 1;
   if (recursionFlag) {
-    if (!ret) delete this;
+    if (!ret) { m_pMain->Release(); delete this;}
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "Release", &ret, {
   });
-  if (!ret) delete this;
+  if (!ret) { m_pMain->Release(); delete this;}
   return ret;
 }
 UINT __stdcall WrappedID3D11CommandList::GetContextFlags() {
@@ -17386,12 +17539,12 @@ ULONG __stdcall WrappedID3D11CommandList::AddRef() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->AddRef();
+  auto ret = m_pMain->AddRef() - 1;
   if (recursionFlag) {
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "AddRef", &ret, {
   });
   return ret;
@@ -17401,16 +17554,16 @@ ULONG __stdcall WrappedID3D11CommandList::Release() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->Release();
+  auto ret = m_pMain->Release() - 1;
   if (recursionFlag) {
-    if (!ret) delete this;
+    if (!ret) { m_pMain->Release(); delete this;}
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "Release", &ret, {
   });
-  if (!ret) delete this;
+  if (!ret) { m_pMain->Release(); delete this;}
   return ret;
 }
 HRESULT __stdcall WrappedID3D11VideoDecoder::GetCreationParameters(
@@ -17594,12 +17747,12 @@ ULONG __stdcall WrappedID3D11VideoDecoder::AddRef() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->AddRef();
+  auto ret = m_pMain->AddRef() - 1;
   if (recursionFlag) {
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "AddRef", &ret, {
   });
   return ret;
@@ -17609,16 +17762,16 @@ ULONG __stdcall WrappedID3D11VideoDecoder::Release() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->Release();
+  auto ret = m_pMain->Release() - 1;
   if (recursionFlag) {
-    if (!ret) delete this;
+    if (!ret) { m_pMain->Release(); delete this;}
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "Release", &ret, {
   });
-  if (!ret) delete this;
+  if (!ret) { m_pMain->Release(); delete this;}
   return ret;
 }
 void __stdcall WrappedID3D11VideoProcessor::GetContentDesc(
@@ -17796,12 +17949,12 @@ ULONG __stdcall WrappedID3D11VideoProcessor::AddRef() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->AddRef();
+  auto ret = m_pMain->AddRef() - 1;
   if (recursionFlag) {
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "AddRef", &ret, {
   });
   return ret;
@@ -17811,16 +17964,16 @@ ULONG __stdcall WrappedID3D11VideoProcessor::Release() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->Release();
+  auto ret = m_pMain->Release() - 1;
   if (recursionFlag) {
-    if (!ret) delete this;
+    if (!ret) { m_pMain->Release(); delete this;}
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "Release", &ret, {
   });
-  if (!ret) delete this;
+  if (!ret) { m_pMain->Release(); delete this;}
   return ret;
 }
 HRESULT __stdcall WrappedID3D11AuthenticatedChannel::GetCertificateSize(
@@ -18021,12 +18174,12 @@ ULONG __stdcall WrappedID3D11AuthenticatedChannel::AddRef() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->AddRef();
+  auto ret = m_pMain->AddRef() - 1;
   if (recursionFlag) {
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "AddRef", &ret, {
   });
   return ret;
@@ -18036,16 +18189,16 @@ ULONG __stdcall WrappedID3D11AuthenticatedChannel::Release() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->Release();
+  auto ret = m_pMain->Release() - 1;
   if (recursionFlag) {
-    if (!ret) delete this;
+    if (!ret) { m_pMain->Release(); delete this;}
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "Release", &ret, {
   });
-  if (!ret) delete this;
+  if (!ret) { m_pMain->Release(); delete this;}
   return ret;
 }
 void __stdcall WrappedID3D11CryptoSession::GetCryptoType(
@@ -18280,12 +18433,12 @@ ULONG __stdcall WrappedID3D11CryptoSession::AddRef() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->AddRef();
+  auto ret = m_pMain->AddRef() - 1;
   if (recursionFlag) {
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "AddRef", &ret, {
   });
   return ret;
@@ -18295,16 +18448,16 @@ ULONG __stdcall WrappedID3D11CryptoSession::Release() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->Release();
+  auto ret = m_pMain->Release() - 1;
   if (recursionFlag) {
-    if (!ret) delete this;
+    if (!ret) { m_pMain->Release(); delete this;}
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "Release", &ret, {
   });
-  if (!ret) delete this;
+  if (!ret) { m_pMain->Release(); delete this;}
   return ret;
 }
 void __stdcall WrappedID3D11VideoDecoderOutputView::GetDesc(
@@ -18488,12 +18641,12 @@ ULONG __stdcall WrappedID3D11VideoDecoderOutputView::AddRef() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->AddRef();
+  auto ret = m_pMain->AddRef() - 1;
   if (recursionFlag) {
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "AddRef", &ret, {
   });
   return ret;
@@ -18503,16 +18656,16 @@ ULONG __stdcall WrappedID3D11VideoDecoderOutputView::Release() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->Release();
+  auto ret = m_pMain->Release() - 1;
   if (recursionFlag) {
-    if (!ret) delete this;
+    if (!ret) { m_pMain->Release(); delete this;}
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "Release", &ret, {
   });
-  if (!ret) delete this;
+  if (!ret) { m_pMain->Release(); delete this;}
   return ret;
 }
 void __stdcall WrappedID3D11VideoProcessorInputView::GetDesc(
@@ -18696,12 +18849,12 @@ ULONG __stdcall WrappedID3D11VideoProcessorInputView::AddRef() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->AddRef();
+  auto ret = m_pMain->AddRef() - 1;
   if (recursionFlag) {
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "AddRef", &ret, {
   });
   return ret;
@@ -18711,16 +18864,16 @@ ULONG __stdcall WrappedID3D11VideoProcessorInputView::Release() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->Release();
+  auto ret = m_pMain->Release() - 1;
   if (recursionFlag) {
-    if (!ret) delete this;
+    if (!ret) { m_pMain->Release(); delete this;}
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "Release", &ret, {
   });
-  if (!ret) delete this;
+  if (!ret) { m_pMain->Release(); delete this;}
   return ret;
 }
 void __stdcall WrappedID3D11VideoProcessorOutputView::GetDesc(
@@ -18904,12 +19057,12 @@ ULONG __stdcall WrappedID3D11VideoProcessorOutputView::AddRef() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->AddRef();
+  auto ret = m_pMain->AddRef() - 1;
   if (recursionFlag) {
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "AddRef", &ret, {
   });
   return ret;
@@ -18919,16 +19072,16 @@ ULONG __stdcall WrappedID3D11VideoProcessorOutputView::Release() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->Release();
+  auto ret = m_pMain->Release() - 1;
   if (recursionFlag) {
-    if (!ret) delete this;
+    if (!ret) { m_pMain->Release(); delete this;}
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "Release", &ret, {
   });
-  if (!ret) delete this;
+  if (!ret) { m_pMain->Release(); delete this;}
   return ret;
 }
 HRESULT __stdcall WrappedID3D11Debug::SetFeatureMask(
@@ -19127,12 +19280,12 @@ ULONG __stdcall WrappedID3D11Debug::AddRef() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->AddRef();
+  auto ret = m_pMain->AddRef() - 1;
   if (recursionFlag) {
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "AddRef", &ret, {
   });
   return ret;
@@ -19142,16 +19295,16 @@ ULONG __stdcall WrappedID3D11Debug::Release() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->Release();
+  auto ret = m_pMain->Release() - 1;
   if (recursionFlag) {
-    if (!ret) delete this;
+    if (!ret) { m_pMain->Release(); delete this;}
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "Release", &ret, {
   });
-  if (!ret) delete this;
+  if (!ret) { m_pMain->Release(); delete this;}
   return ret;
 }
 BOOL __stdcall WrappedID3D11SwitchToRef::SetUseRef(
@@ -19226,12 +19379,12 @@ ULONG __stdcall WrappedID3D11SwitchToRef::AddRef() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->AddRef();
+  auto ret = m_pMain->AddRef() - 1;
   if (recursionFlag) {
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "AddRef", &ret, {
   });
   return ret;
@@ -19241,16 +19394,16 @@ ULONG __stdcall WrappedID3D11SwitchToRef::Release() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->Release();
+  auto ret = m_pMain->Release() - 1;
   if (recursionFlag) {
-    if (!ret) delete this;
+    if (!ret) { m_pMain->Release(); delete this;}
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "Release", &ret, {
   });
-  if (!ret) delete this;
+  if (!ret) { m_pMain->Release(); delete this;}
   return ret;
 }
 HRESULT __stdcall WrappedID3D11TracingDevice::SetShaderTrackingOptionsByType(
@@ -19340,12 +19493,12 @@ ULONG __stdcall WrappedID3D11TracingDevice::AddRef() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->AddRef();
+  auto ret = m_pMain->AddRef() - 1;
   if (recursionFlag) {
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "AddRef", &ret, {
   });
   return ret;
@@ -19355,16 +19508,16 @@ ULONG __stdcall WrappedID3D11TracingDevice::Release() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->Release();
+  auto ret = m_pMain->Release() - 1;
   if (recursionFlag) {
-    if (!ret) delete this;
+    if (!ret) { m_pMain->Release(); delete this;}
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "Release", &ret, {
   });
-  if (!ret) delete this;
+  if (!ret) { m_pMain->Release(); delete this;}
   return ret;
 }
 HRESULT __stdcall WrappedID3D11RefTrackingOptions::SetTrackingOptions(
@@ -19427,12 +19580,12 @@ ULONG __stdcall WrappedID3D11RefTrackingOptions::AddRef() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->AddRef();
+  auto ret = m_pMain->AddRef() - 1;
   if (recursionFlag) {
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "AddRef", &ret, {
   });
   return ret;
@@ -19442,16 +19595,16 @@ ULONG __stdcall WrappedID3D11RefTrackingOptions::Release() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->Release();
+  auto ret = m_pMain->Release() - 1;
   if (recursionFlag) {
-    if (!ret) delete this;
+    if (!ret) { m_pMain->Release(); delete this;}
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "Release", &ret, {
   });
-  if (!ret) delete this;
+  if (!ret) { m_pMain->Release(); delete this;}
   return ret;
 }
 HRESULT __stdcall WrappedID3D11RefDefaultTrackingOptions::SetTrackingOptions(
@@ -19518,12 +19671,12 @@ ULONG __stdcall WrappedID3D11RefDefaultTrackingOptions::AddRef() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->AddRef();
+  auto ret = m_pMain->AddRef() - 1;
   if (recursionFlag) {
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "AddRef", &ret, {
   });
   return ret;
@@ -19533,16 +19686,16 @@ ULONG __stdcall WrappedID3D11RefDefaultTrackingOptions::Release() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->Release();
+  auto ret = m_pMain->Release() - 1;
   if (recursionFlag) {
-    if (!ret) delete this;
+    if (!ret) { m_pMain->Release(); delete this;}
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "Release", &ret, {
   });
-  if (!ret) delete this;
+  if (!ret) { m_pMain->Release(); delete this;}
   return ret;
 }
 HRESULT __stdcall WrappedID3D11InfoQueue::SetMessageCountLimit(
@@ -20154,12 +20307,12 @@ ULONG __stdcall WrappedID3D11InfoQueue::AddRef() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->AddRef();
+  auto ret = m_pMain->AddRef() - 1;
   if (recursionFlag) {
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "AddRef", &ret, {
   });
   return ret;
@@ -20169,16 +20322,16 @@ ULONG __stdcall WrappedID3D11InfoQueue::Release() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->Release();
+  auto ret = m_pMain->Release() - 1;
   if (recursionFlag) {
-    if (!ret) delete this;
+    if (!ret) { m_pMain->Release(); delete this;}
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "Release", &ret, {
   });
-  if (!ret) delete this;
+  if (!ret) { m_pMain->Release(); delete this;}
   return ret;
 }
 void __stdcall WrappedID3DDeviceContextState::GetDevice(
@@ -20322,12 +20475,12 @@ ULONG __stdcall WrappedID3DDeviceContextState::AddRef() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->AddRef();
+  auto ret = m_pMain->AddRef() - 1;
   if (recursionFlag) {
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "AddRef", &ret, {
   });
   return ret;
@@ -20337,16 +20490,16 @@ ULONG __stdcall WrappedID3DDeviceContextState::Release() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->Release();
+  auto ret = m_pMain->Release() - 1;
   if (recursionFlag) {
-    if (!ret) delete this;
+    if (!ret) { m_pMain->Release(); delete this;}
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "Release", &ret, {
   });
-  if (!ret) delete this;
+  if (!ret) { m_pMain->Release(); delete this;}
   return ret;
 }
 BOOL __stdcall WrappedIDXGIDisplayControl::IsStereoEnabled() {
@@ -20420,12 +20573,12 @@ ULONG __stdcall WrappedIDXGIDisplayControl::AddRef() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->AddRef();
+  auto ret = m_pMain->AddRef() - 1;
   if (recursionFlag) {
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "AddRef", &ret, {
   });
   return ret;
@@ -20435,16 +20588,16 @@ ULONG __stdcall WrappedIDXGIDisplayControl::Release() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->Release();
+  auto ret = m_pMain->Release() - 1;
   if (recursionFlag) {
-    if (!ret) delete this;
+    if (!ret) { m_pMain->Release(); delete this;}
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "Release", &ret, {
   });
-  if (!ret) delete this;
+  if (!ret) { m_pMain->Release(); delete this;}
   return ret;
 }
 void __stdcall WrappedIDXGIOutputDuplication::GetDesc(
@@ -20767,12 +20920,12 @@ ULONG __stdcall WrappedIDXGIOutputDuplication::AddRef() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->AddRef();
+  auto ret = m_pMain->AddRef() - 1;
   if (recursionFlag) {
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "AddRef", &ret, {
   });
   return ret;
@@ -20782,16 +20935,16 @@ ULONG __stdcall WrappedIDXGIOutputDuplication::Release() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->Release();
+  auto ret = m_pMain->Release() - 1;
   if (recursionFlag) {
-    if (!ret) delete this;
+    if (!ret) { m_pMain->Release(); delete this;}
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "Release", &ret, {
   });
-  if (!ret) delete this;
+  if (!ret) { m_pMain->Release(); delete this;}
   return ret;
 }
 HRESULT __stdcall WrappedIDXGISurface2::GetResource(
@@ -21100,12 +21253,12 @@ ULONG __stdcall WrappedIDXGISurface2::AddRef() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->AddRef();
+  auto ret = m_pMain->AddRef() - 1;
   if (recursionFlag) {
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "AddRef", &ret, {
   });
   return ret;
@@ -21115,16 +21268,16 @@ ULONG __stdcall WrappedIDXGISurface2::Release() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->Release();
+  auto ret = m_pMain->Release() - 1;
   if (recursionFlag) {
-    if (!ret) delete this;
+    if (!ret) { m_pMain->Release(); delete this;}
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "Release", &ret, {
   });
-  if (!ret) delete this;
+  if (!ret) { m_pMain->Release(); delete this;}
   return ret;
 }
 HRESULT __stdcall WrappedIDXGIResource1::CreateSubresourceSurface(
@@ -21435,12 +21588,12 @@ ULONG __stdcall WrappedIDXGIResource1::AddRef() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->AddRef();
+  auto ret = m_pMain->AddRef() - 1;
   if (recursionFlag) {
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "AddRef", &ret, {
   });
   return ret;
@@ -21450,16 +21603,16 @@ ULONG __stdcall WrappedIDXGIResource1::Release() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->Release();
+  auto ret = m_pMain->Release() - 1;
   if (recursionFlag) {
-    if (!ret) delete this;
+    if (!ret) { m_pMain->Release(); delete this;}
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "Release", &ret, {
   });
-  if (!ret) delete this;
+  if (!ret) { m_pMain->Release(); delete this;}
   return ret;
 }
 void __stdcall WrappedID3D11BlendState1::GetDesc1(
@@ -21641,12 +21794,12 @@ ULONG __stdcall WrappedID3D11BlendState1::AddRef() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->AddRef();
+  auto ret = m_pMain->AddRef() - 1;
   if (recursionFlag) {
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "AddRef", &ret, {
   });
   return ret;
@@ -21656,16 +21809,16 @@ ULONG __stdcall WrappedID3D11BlendState1::Release() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->Release();
+  auto ret = m_pMain->Release() - 1;
   if (recursionFlag) {
-    if (!ret) delete this;
+    if (!ret) { m_pMain->Release(); delete this;}
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "Release", &ret, {
   });
-  if (!ret) delete this;
+  if (!ret) { m_pMain->Release(); delete this;}
   return ret;
 }
 HRESULT __stdcall WrappedID3D11VideoProcessorEnumerator1::CheckVideoProcessorFormatConversion(
@@ -21975,12 +22128,12 @@ ULONG __stdcall WrappedID3D11VideoProcessorEnumerator1::AddRef() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->AddRef();
+  auto ret = m_pMain->AddRef() - 1;
   if (recursionFlag) {
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "AddRef", &ret, {
   });
   return ret;
@@ -21990,16 +22143,16 @@ ULONG __stdcall WrappedID3D11VideoProcessorEnumerator1::Release() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->Release();
+  auto ret = m_pMain->Release() - 1;
   if (recursionFlag) {
-    if (!ret) delete this;
+    if (!ret) { m_pMain->Release(); delete this;}
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "Release", &ret, {
   });
-  if (!ret) delete this;
+  if (!ret) { m_pMain->Release(); delete this;}
   return ret;
 }
 INT __stdcall WrappedID3DUserDefinedAnnotation::BeginEvent(
@@ -22103,12 +22256,12 @@ ULONG __stdcall WrappedID3DUserDefinedAnnotation::AddRef() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->AddRef();
+  auto ret = m_pMain->AddRef() - 1;
   if (recursionFlag) {
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "AddRef", &ret, {
   });
   return ret;
@@ -22118,16 +22271,16 @@ ULONG __stdcall WrappedID3DUserDefinedAnnotation::Release() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->Release();
+  auto ret = m_pMain->Release() - 1;
   if (recursionFlag) {
-    if (!ret) delete this;
+    if (!ret) { m_pMain->Release(); delete this;}
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "Release", &ret, {
   });
-  if (!ret) delete this;
+  if (!ret) { m_pMain->Release(); delete this;}
   return ret;
 }
 HRESULT __stdcall WrappedIDXGIDecodeSwapChain::PresentBuffer(
@@ -22346,12 +22499,12 @@ ULONG __stdcall WrappedIDXGIDecodeSwapChain::AddRef() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->AddRef();
+  auto ret = m_pMain->AddRef() - 1;
   if (recursionFlag) {
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "AddRef", &ret, {
   });
   return ret;
@@ -22361,16 +22514,16 @@ ULONG __stdcall WrappedIDXGIDecodeSwapChain::Release() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->Release();
+  auto ret = m_pMain->Release() - 1;
   if (recursionFlag) {
-    if (!ret) delete this;
+    if (!ret) { m_pMain->Release(); delete this;}
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "Release", &ret, {
   });
-  if (!ret) delete this;
+  if (!ret) { m_pMain->Release(); delete this;}
   return ret;
 }
 HRESULT __stdcall WrappedIDXGIFactoryMedia::CreateSwapChainForCompositionSurfaceHandle(
@@ -22496,12 +22649,12 @@ ULONG __stdcall WrappedIDXGIFactoryMedia::AddRef() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->AddRef();
+  auto ret = m_pMain->AddRef() - 1;
   if (recursionFlag) {
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "AddRef", &ret, {
   });
   return ret;
@@ -22511,16 +22664,16 @@ ULONG __stdcall WrappedIDXGIFactoryMedia::Release() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->Release();
+  auto ret = m_pMain->Release() - 1;
   if (recursionFlag) {
-    if (!ret) delete this;
+    if (!ret) { m_pMain->Release(); delete this;}
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "Release", &ret, {
   });
-  if (!ret) delete this;
+  if (!ret) { m_pMain->Release(); delete this;}
   return ret;
 }
 HRESULT __stdcall WrappedIDXGISwapChainMedia::GetFrameStatisticsMedia(
@@ -22627,12 +22780,12 @@ ULONG __stdcall WrappedIDXGISwapChainMedia::AddRef() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->AddRef();
+  auto ret = m_pMain->AddRef() - 1;
   if (recursionFlag) {
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "AddRef", &ret, {
   });
   return ret;
@@ -22642,16 +22795,16 @@ ULONG __stdcall WrappedIDXGISwapChainMedia::Release() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->Release();
+  auto ret = m_pMain->Release() - 1;
   if (recursionFlag) {
-    if (!ret) delete this;
+    if (!ret) { m_pMain->Release(); delete this;}
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "Release", &ret, {
   });
-  if (!ret) delete this;
+  if (!ret) { m_pMain->Release(); delete this;}
   return ret;
 }
 void __stdcall WrappedID3D11Texture2D1::GetDesc1(
@@ -22883,12 +23036,12 @@ ULONG __stdcall WrappedID3D11Texture2D1::AddRef() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->AddRef();
+  auto ret = m_pMain->AddRef() - 1;
   if (recursionFlag) {
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "AddRef", &ret, {
   });
   return ret;
@@ -22898,16 +23051,16 @@ ULONG __stdcall WrappedID3D11Texture2D1::Release() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->Release();
+  auto ret = m_pMain->Release() - 1;
   if (recursionFlag) {
-    if (!ret) delete this;
+    if (!ret) { m_pMain->Release(); delete this;}
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "Release", &ret, {
   });
-  if (!ret) delete this;
+  if (!ret) { m_pMain->Release(); delete this;}
   return ret;
 }
 void __stdcall WrappedID3D11Texture3D1::GetDesc1(
@@ -23139,12 +23292,12 @@ ULONG __stdcall WrappedID3D11Texture3D1::AddRef() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->AddRef();
+  auto ret = m_pMain->AddRef() - 1;
   if (recursionFlag) {
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "AddRef", &ret, {
   });
   return ret;
@@ -23154,16 +23307,16 @@ ULONG __stdcall WrappedID3D11Texture3D1::Release() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->Release();
+  auto ret = m_pMain->Release() - 1;
   if (recursionFlag) {
-    if (!ret) delete this;
+    if (!ret) { m_pMain->Release(); delete this;}
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "Release", &ret, {
   });
-  if (!ret) delete this;
+  if (!ret) { m_pMain->Release(); delete this;}
   return ret;
 }
 void __stdcall WrappedID3D11RasterizerState2::GetDesc2(
@@ -23366,12 +23519,12 @@ ULONG __stdcall WrappedID3D11RasterizerState2::AddRef() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->AddRef();
+  auto ret = m_pMain->AddRef() - 1;
   if (recursionFlag) {
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "AddRef", &ret, {
   });
   return ret;
@@ -23381,16 +23534,16 @@ ULONG __stdcall WrappedID3D11RasterizerState2::Release() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->Release();
+  auto ret = m_pMain->Release() - 1;
   if (recursionFlag) {
-    if (!ret) delete this;
+    if (!ret) { m_pMain->Release(); delete this;}
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "Release", &ret, {
   });
-  if (!ret) delete this;
+  if (!ret) { m_pMain->Release(); delete this;}
   return ret;
 }
 void __stdcall WrappedID3D11ShaderResourceView1::GetDesc1(
@@ -23595,12 +23748,12 @@ ULONG __stdcall WrappedID3D11ShaderResourceView1::AddRef() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->AddRef();
+  auto ret = m_pMain->AddRef() - 1;
   if (recursionFlag) {
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "AddRef", &ret, {
   });
   return ret;
@@ -23610,16 +23763,16 @@ ULONG __stdcall WrappedID3D11ShaderResourceView1::Release() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->Release();
+  auto ret = m_pMain->Release() - 1;
   if (recursionFlag) {
-    if (!ret) delete this;
+    if (!ret) { m_pMain->Release(); delete this;}
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "Release", &ret, {
   });
-  if (!ret) delete this;
+  if (!ret) { m_pMain->Release(); delete this;}
   return ret;
 }
 void __stdcall WrappedID3D11RenderTargetView1::GetDesc1(
@@ -23824,12 +23977,12 @@ ULONG __stdcall WrappedID3D11RenderTargetView1::AddRef() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->AddRef();
+  auto ret = m_pMain->AddRef() - 1;
   if (recursionFlag) {
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "AddRef", &ret, {
   });
   return ret;
@@ -23839,16 +23992,16 @@ ULONG __stdcall WrappedID3D11RenderTargetView1::Release() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->Release();
+  auto ret = m_pMain->Release() - 1;
   if (recursionFlag) {
-    if (!ret) delete this;
+    if (!ret) { m_pMain->Release(); delete this;}
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "Release", &ret, {
   });
-  if (!ret) delete this;
+  if (!ret) { m_pMain->Release(); delete this;}
   return ret;
 }
 void __stdcall WrappedID3D11UnorderedAccessView1::GetDesc1(
@@ -24053,12 +24206,12 @@ ULONG __stdcall WrappedID3D11UnorderedAccessView1::AddRef() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->AddRef();
+  auto ret = m_pMain->AddRef() - 1;
   if (recursionFlag) {
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "AddRef", &ret, {
   });
   return ret;
@@ -24068,16 +24221,16 @@ ULONG __stdcall WrappedID3D11UnorderedAccessView1::Release() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->Release();
+  auto ret = m_pMain->Release() - 1;
   if (recursionFlag) {
-    if (!ret) delete this;
+    if (!ret) { m_pMain->Release(); delete this;}
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "Release", &ret, {
   });
-  if (!ret) delete this;
+  if (!ret) { m_pMain->Release(); delete this;}
   return ret;
 }
 void __stdcall WrappedID3D11Query1::GetDesc1(
@@ -24275,12 +24428,12 @@ ULONG __stdcall WrappedID3D11Query1::AddRef() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->AddRef();
+  auto ret = m_pMain->AddRef() - 1;
   if (recursionFlag) {
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "AddRef", &ret, {
   });
   return ret;
@@ -24290,16 +24443,16 @@ ULONG __stdcall WrappedID3D11Query1::Release() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->Release();
+  auto ret = m_pMain->Release() - 1;
   if (recursionFlag) {
-    if (!ret) delete this;
+    if (!ret) { m_pMain->Release(); delete this;}
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "Release", &ret, {
   });
-  if (!ret) delete this;
+  if (!ret) { m_pMain->Release(); delete this;}
   return ret;
 }
 HRESULT __stdcall WrappedID3D11Fence::CreateSharedHandle(
@@ -24508,12 +24661,12 @@ ULONG __stdcall WrappedID3D11Fence::AddRef() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->AddRef();
+  auto ret = m_pMain->AddRef() - 1;
   if (recursionFlag) {
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "AddRef", &ret, {
   });
   return ret;
@@ -24523,16 +24676,16 @@ ULONG __stdcall WrappedID3D11Fence::Release() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->Release();
+  auto ret = m_pMain->Release() - 1;
   if (recursionFlag) {
-    if (!ret) delete this;
+    if (!ret) { m_pMain->Release(); delete this;}
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "Release", &ret, {
   });
-  if (!ret) delete this;
+  if (!ret) { m_pMain->Release(); delete this;}
   return ret;
 }
 HRESULT __stdcall WrappedID3D11DeviceContext4::Signal(
@@ -28454,12 +28607,12 @@ ULONG __stdcall WrappedID3D11DeviceContext4::AddRef() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->AddRef();
+  auto ret = m_pMain->AddRef() - 1;
   if (recursionFlag) {
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "AddRef", &ret, {
   });
   return ret;
@@ -28469,16 +28622,16 @@ ULONG __stdcall WrappedID3D11DeviceContext4::Release() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->Release();
+  auto ret = m_pMain->Release() - 1;
   if (recursionFlag) {
-    if (!ret) delete this;
+    if (!ret) { m_pMain->Release(); delete this;}
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "Release", &ret, {
   });
-  if (!ret) delete this;
+  if (!ret) { m_pMain->Release(); delete this;}
   return ret;
 }
 HRESULT __stdcall WrappedIDXGIAdapter3::RegisterHardwareContentProtectionTeardownStatusEvent(
@@ -28871,12 +29024,12 @@ ULONG __stdcall WrappedIDXGIAdapter3::AddRef() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->AddRef();
+  auto ret = m_pMain->AddRef() - 1;
   if (recursionFlag) {
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "AddRef", &ret, {
   });
   return ret;
@@ -28886,16 +29039,16 @@ ULONG __stdcall WrappedIDXGIAdapter3::Release() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->Release();
+  auto ret = m_pMain->Release() - 1;
   if (recursionFlag) {
-    if (!ret) delete this;
+    if (!ret) { m_pMain->Release(); delete this;}
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "Release", &ret, {
   });
-  if (!ret) delete this;
+  if (!ret) { m_pMain->Release(); delete this;}
   return ret;
 }
 HRESULT __stdcall WrappedIDXGIOutput5::DuplicateOutput1(
@@ -29511,12 +29664,12 @@ ULONG __stdcall WrappedIDXGIOutput5::AddRef() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->AddRef();
+  auto ret = m_pMain->AddRef() - 1;
   if (recursionFlag) {
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "AddRef", &ret, {
   });
   return ret;
@@ -29526,16 +29679,16 @@ ULONG __stdcall WrappedIDXGIOutput5::Release() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->Release();
+  auto ret = m_pMain->Release() - 1;
   if (recursionFlag) {
-    if (!ret) delete this;
+    if (!ret) { m_pMain->Release(); delete this;}
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "Release", &ret, {
   });
-  if (!ret) delete this;
+  if (!ret) { m_pMain->Release(); delete this;}
   return ret;
 }
 HRESULT __stdcall WrappedIDXGISwapChain4::SetHDRMetaData(
@@ -30416,12 +30569,12 @@ ULONG __stdcall WrappedIDXGISwapChain4::AddRef() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->AddRef();
+  auto ret = m_pMain->AddRef() - 1;
   if (recursionFlag) {
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "AddRef", &ret, {
   });
   return ret;
@@ -30431,16 +30584,16 @@ ULONG __stdcall WrappedIDXGISwapChain4::Release() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->Release();
+  auto ret = m_pMain->Release() - 1;
   if (recursionFlag) {
-    if (!ret) delete this;
+    if (!ret) { m_pMain->Release(); delete this;}
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "Release", &ret, {
   });
-  if (!ret) delete this;
+  if (!ret) { m_pMain->Release(); delete this;}
   return ret;
 }
 HRESULT __stdcall WrappedIDXGIDevice4::OfferResources1(
@@ -30909,12 +31062,12 @@ ULONG __stdcall WrappedIDXGIDevice4::AddRef() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->AddRef();
+  auto ret = m_pMain->AddRef() - 1;
   if (recursionFlag) {
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "AddRef", &ret, {
   });
   return ret;
@@ -30924,16 +31077,16 @@ ULONG __stdcall WrappedIDXGIDevice4::Release() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->Release();
+  auto ret = m_pMain->Release() - 1;
   if (recursionFlag) {
-    if (!ret) delete this;
+    if (!ret) { m_pMain->Release(); delete this;}
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "Release", &ret, {
   });
-  if (!ret) delete this;
+  if (!ret) { m_pMain->Release(); delete this;}
   return ret;
 }
 HRESULT __stdcall WrappedIDXGIFactory5::CheckFeatureSupport(
@@ -31632,12 +31785,12 @@ ULONG __stdcall WrappedIDXGIFactory5::AddRef() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->AddRef();
+  auto ret = m_pMain->AddRef() - 1;
   if (recursionFlag) {
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "AddRef", &ret, {
   });
   return ret;
@@ -31647,16 +31800,16 @@ ULONG __stdcall WrappedIDXGIFactory5::Release() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->Release();
+  auto ret = m_pMain->Release() - 1;
   if (recursionFlag) {
-    if (!ret) delete this;
+    if (!ret) { m_pMain->Release(); delete this;}
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "Release", &ret, {
   });
-  if (!ret) delete this;
+  if (!ret) { m_pMain->Release(); delete this;}
   return ret;
 }
 HRESULT __stdcall WrappedID3D11Device5::OpenSharedFence(
@@ -33488,12 +33641,12 @@ ULONG __stdcall WrappedID3D11Device5::AddRef() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->AddRef();
+  auto ret = m_pMain->AddRef() - 1;
   if (recursionFlag) {
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "AddRef", &ret, {
   });
   return ret;
@@ -33503,16 +33656,16 @@ ULONG __stdcall WrappedID3D11Device5::Release() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->Release();
+  auto ret = m_pMain->Release() - 1;
   if (recursionFlag) {
-    if (!ret) delete this;
+    if (!ret) { m_pMain->Release(); delete this;}
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "Release", &ret, {
   });
-  if (!ret) delete this;
+  if (!ret) { m_pMain->Release(); delete this;}
   return ret;
 }
 void __stdcall WrappedID3D11Multithread::Enter() {
@@ -33609,12 +33762,12 @@ ULONG __stdcall WrappedID3D11Multithread::AddRef() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->AddRef();
+  auto ret = m_pMain->AddRef() - 1;
   if (recursionFlag) {
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "AddRef", &ret, {
   });
   return ret;
@@ -33624,16 +33777,16 @@ ULONG __stdcall WrappedID3D11Multithread::Release() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->Release();
+  auto ret = m_pMain->Release() - 1;
   if (recursionFlag) {
-    if (!ret) delete this;
+    if (!ret) { m_pMain->Release(); delete this;}
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "Release", &ret, {
   });
-  if (!ret) delete this;
+  if (!ret) { m_pMain->Release(); delete this;}
   return ret;
 }
 HRESULT __stdcall WrappedID3D11VideoDevice2::CheckFeatureSupport(
@@ -34364,12 +34517,12 @@ ULONG __stdcall WrappedID3D11VideoDevice2::AddRef() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->AddRef();
+  auto ret = m_pMain->AddRef() - 1;
   if (recursionFlag) {
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "AddRef", &ret, {
   });
   return ret;
@@ -34379,16 +34532,16 @@ ULONG __stdcall WrappedID3D11VideoDevice2::Release() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->Release();
+  auto ret = m_pMain->Release() - 1;
   if (recursionFlag) {
-    if (!ret) delete this;
+    if (!ret) { m_pMain->Release(); delete this;}
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "Release", &ret, {
   });
-  if (!ret) delete this;
+  if (!ret) { m_pMain->Release(); delete this;}
   return ret;
 }
 HRESULT __stdcall WrappedID3D11VideoContext3::DecoderBeginFrame1(
@@ -36869,12 +37022,12 @@ ULONG __stdcall WrappedID3D11VideoContext3::AddRef() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->AddRef();
+  auto ret = m_pMain->AddRef() - 1;
   if (recursionFlag) {
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "AddRef", &ret, {
   });
   return ret;
@@ -36884,16 +37037,16 @@ ULONG __stdcall WrappedID3D11VideoContext3::Release() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->Release();
+  auto ret = m_pMain->Release() - 1;
   if (recursionFlag) {
-    if (!ret) delete this;
+    if (!ret) { m_pMain->Release(); delete this;}
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "Release", &ret, {
   });
-  if (!ret) delete this;
+  if (!ret) { m_pMain->Release(); delete this;}
   return ret;
 }
 HRESULT __stdcall WrappedID3D11ShaderReflectionType::GetDesc(
@@ -37236,12 +37389,12 @@ ULONG __stdcall WrappedID3D11ShaderReflection::AddRef() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->AddRef();
+  auto ret = m_pMain->AddRef() - 1;
   if (recursionFlag) {
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "AddRef", &ret, {
   });
   return ret;
@@ -37251,16 +37404,16 @@ ULONG __stdcall WrappedID3D11ShaderReflection::Release() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->Release();
+  auto ret = m_pMain->Release() - 1;
   if (recursionFlag) {
-    if (!ret) delete this;
+    if (!ret) { m_pMain->Release(); delete this;}
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "Release", &ret, {
   });
-  if (!ret) delete this;
+  if (!ret) { m_pMain->Release(); delete this;}
   return ret;
 }
 HRESULT __stdcall WrappedID3D11ShaderReflection::GetDesc(
@@ -37627,12 +37780,12 @@ ULONG __stdcall WrappedID3D11LibraryReflection::AddRef() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->AddRef();
+  auto ret = m_pMain->AddRef() - 1;
   if (recursionFlag) {
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "AddRef", &ret, {
   });
   return ret;
@@ -37642,16 +37795,16 @@ ULONG __stdcall WrappedID3D11LibraryReflection::Release() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->Release();
+  auto ret = m_pMain->Release() - 1;
   if (recursionFlag) {
-    if (!ret) delete this;
+    if (!ret) { m_pMain->Release(); delete this;}
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "Release", &ret, {
   });
-  if (!ret) delete this;
+  if (!ret) { m_pMain->Release(); delete this;}
   return ret;
 }
 HRESULT __stdcall WrappedID3D11LibraryReflection::GetDesc(
@@ -37884,12 +38037,12 @@ ULONG __stdcall WrappedID3D11Module::AddRef() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->AddRef();
+  auto ret = m_pMain->AddRef() - 1;
   if (recursionFlag) {
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "AddRef", &ret, {
   });
   return ret;
@@ -37899,16 +38052,16 @@ ULONG __stdcall WrappedID3D11Module::Release() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->Release();
+  auto ret = m_pMain->Release() - 1;
   if (recursionFlag) {
-    if (!ret) delete this;
+    if (!ret) { m_pMain->Release(); delete this;}
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "Release", &ret, {
   });
-  if (!ret) delete this;
+  if (!ret) { m_pMain->Release(); delete this;}
   return ret;
 }
 HRESULT __stdcall WrappedID3D11Module::CreateInstance(
@@ -37976,12 +38129,12 @@ ULONG __stdcall WrappedID3D11ModuleInstance::AddRef() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->AddRef();
+  auto ret = m_pMain->AddRef() - 1;
   if (recursionFlag) {
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "AddRef", &ret, {
   });
   return ret;
@@ -37991,16 +38144,16 @@ ULONG __stdcall WrappedID3D11ModuleInstance::Release() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->Release();
+  auto ret = m_pMain->Release() - 1;
   if (recursionFlag) {
-    if (!ret) delete this;
+    if (!ret) { m_pMain->Release(); delete this;}
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "Release", &ret, {
   });
-  if (!ret) delete this;
+  if (!ret) { m_pMain->Release(); delete this;}
   return ret;
 }
 HRESULT __stdcall WrappedID3D11ModuleInstance::BindConstantBuffer(
@@ -38305,12 +38458,12 @@ ULONG __stdcall WrappedID3D11Linker::AddRef() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->AddRef();
+  auto ret = m_pMain->AddRef() - 1;
   if (recursionFlag) {
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "AddRef", &ret, {
   });
   return ret;
@@ -38320,16 +38473,16 @@ ULONG __stdcall WrappedID3D11Linker::Release() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->Release();
+  auto ret = m_pMain->Release() - 1;
   if (recursionFlag) {
-    if (!ret) delete this;
+    if (!ret) { m_pMain->Release(); delete this;}
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "Release", &ret, {
   });
-  if (!ret) delete this;
+  if (!ret) { m_pMain->Release(); delete this;}
   return ret;
 }
 HRESULT __stdcall WrappedID3D11Linker::Link(
@@ -38454,12 +38607,12 @@ ULONG __stdcall WrappedID3D11LinkingNode::AddRef() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->AddRef();
+  auto ret = m_pMain->AddRef() - 1;
   if (recursionFlag) {
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "AddRef", &ret, {
   });
   return ret;
@@ -38469,16 +38622,16 @@ ULONG __stdcall WrappedID3D11LinkingNode::Release() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->Release();
+  auto ret = m_pMain->Release() - 1;
   if (recursionFlag) {
-    if (!ret) delete this;
+    if (!ret) { m_pMain->Release(); delete this;}
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "Release", &ret, {
   });
-  if (!ret) delete this;
+  if (!ret) { m_pMain->Release(); delete this;}
   return ret;
 }
 HRESULT __stdcall WrappedID3D11FunctionLinkingGraph::QueryInterface(
@@ -38523,12 +38676,12 @@ ULONG __stdcall WrappedID3D11FunctionLinkingGraph::AddRef() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->AddRef();
+  auto ret = m_pMain->AddRef() - 1;
   if (recursionFlag) {
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "AddRef", &ret, {
   });
   return ret;
@@ -38538,16 +38691,16 @@ ULONG __stdcall WrappedID3D11FunctionLinkingGraph::Release() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->Release();
+  auto ret = m_pMain->Release() - 1;
   if (recursionFlag) {
-    if (!ret) delete this;
+    if (!ret) { m_pMain->Release(); delete this;}
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "Release", &ret, {
   });
-  if (!ret) delete this;
+  if (!ret) { m_pMain->Release(); delete this;}
   return ret;
 }
 HRESULT __stdcall WrappedID3D11FunctionLinkingGraph::CreateModuleInstance(
@@ -39113,12 +39266,12 @@ ULONG __stdcall WrappedID3D12ShaderReflection::AddRef() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->AddRef();
+  auto ret = m_pMain->AddRef() - 1;
   if (recursionFlag) {
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "AddRef", &ret, {
   });
   return ret;
@@ -39128,16 +39281,16 @@ ULONG __stdcall WrappedID3D12ShaderReflection::Release() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->Release();
+  auto ret = m_pMain->Release() - 1;
   if (recursionFlag) {
-    if (!ret) delete this;
+    if (!ret) { m_pMain->Release(); delete this;}
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "Release", &ret, {
   });
-  if (!ret) delete this;
+  if (!ret) { m_pMain->Release(); delete this;}
   return ret;
 }
 HRESULT __stdcall WrappedID3D12ShaderReflection::GetDesc(
@@ -39504,12 +39657,12 @@ ULONG __stdcall WrappedID3D12LibraryReflection::AddRef() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->AddRef();
+  auto ret = m_pMain->AddRef() - 1;
   if (recursionFlag) {
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "AddRef", &ret, {
   });
   return ret;
@@ -39519,16 +39672,16 @@ ULONG __stdcall WrappedID3D12LibraryReflection::Release() {
   bool recursionFlag = false;
   getRecursionFlag().compare_exchange_strong(recursionFlag, true);
   assert(m_pMain);
-  auto ret = m_pMain->Release();
+  auto ret = m_pMain->Release() - 1;
   if (recursionFlag) {
-    if (!ret) delete this;
+    if (!ret) { m_pMain->Release(); delete this;}
     return ret;
   }
   getRecursionFlag() = false;
-  out() << "// returned " << ret << "\n";
+  out() << "// orig=" << ret << "\n";
   dumpMethodEvent((void*)this, "IUnknown", "Release", &ret, {
   });
-  if (!ret) delete this;
+  if (!ret) { m_pMain->Release(); delete this;}
   return ret;
 }
 HRESULT __stdcall WrappedID3D12LibraryReflection::GetDesc(
