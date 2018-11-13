@@ -20,7 +20,6 @@ add_definitions(${LLVM_DEFINITIONS})
 
 add_executable(apiparse main.cpp apiutil.py d3d11wrapgen.py)
 add_executable(example
-${CMAKE_CURRENT_BINARY_DIR}/dump.cpp
 example.cpp)
 
 target_link_libraries(apiparse PRIVATE
@@ -82,6 +81,8 @@ set (CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 
 add_library (injectee_iat MODULE
     injectee_iat.cpp
+	memtrace.cpp
+	crc32c.c
 	${CMAKE_CURRENT_BINARY_DIR}/d3d11wrapper.cpp
 )
 

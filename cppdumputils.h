@@ -13,12 +13,15 @@
 #include <dxgi1_3.h>
 #include <dxgidebug.h>
 #include <unordered_map>
+#include <map>
 #include <fstream>
 #include <assert.h>
 #include <mutex>
 #include <atomic>
 #include <thread>
-
+#include <algorithm>
+#include <memtrace.hpp>
+#include <d3dutils.h>
 /*static std::ofstream &out()
 {
 	static bool init = false;
@@ -53,12 +56,12 @@ static std::ofstream &tableOut()
 	return file;
 }*/
 
-static std::ofstream &blobOut()
+/*static std::ofstream &blobOut()
 {
 	static std::ofstream file("cppdump/blob", std::ios_base::out | std::ios_base::binary);
 	file.setf(std::ios::unitbuf);
 	return file;
-}
+}*/
 
 static size_t &blobCounter()
 {
@@ -128,19 +131,26 @@ T *getWrapper(T *t)
 }
 
 template<typename T>
+T *unwrapUnsafe(T *t)
+{
+	auto &uwt = getUnwrapTable();
+	auto fd = uwt.find(reinterpret_cast<size_t>((void*)t));
+	if (fd == uwt.end()) {
+		return t;
+	}
+	else
+	{
+		return reinterpret_cast<T*>((*fd).second);
+	}
+}
+
+template<typename T>
 T *unwrap(T *t)
 {
   GLOBAL_LOCK;
-  auto &uwt = getUnwrapTable();
-  auto fd = uwt.find(reinterpret_cast<size_t>((void*)t));
-  if (fd == uwt.end()) {
-    return t;
-  }
-  else
-  {
-    return reinterpret_cast<T*>((*fd).second);
-  }
+	return unwrapUnsafe(t);
 }
+
 std::ostream& operator<<(std::ostream& os, REFGUID guid) {
 
   os << std::uppercase;
@@ -181,9 +191,9 @@ struct MapDesc
 };
 
 // pResource -> subresourceID -> MapDesc
-static std::unordered_map<size_t, std::unordered_map<size_t, MapDesc>> &getMapTable()
+static std::map<std::pair<ID3D11Resource *, UINT>, MemoryShadow> &getMapTable()
 {
-	static std::unordered_map<size_t, std::unordered_map<size_t, MapDesc>> table;
+	static std::map<std::pair<ID3D11Resource *, UINT>, MemoryShadow> table;
 	return table;
 }
 
@@ -193,42 +203,6 @@ static size_t getEventNumber()
 	static size_t counter = 0u;
 	return counter++;
 }
-
-static size_t serializePtr(void const *v, size_t size, int line)
-{
-	if (!v)
-	{
-		return 0u;
-	}
-	static std::unordered_map<int, size_t> writtenBytesPerLine;
-	writtenBytesPerLine[line] += size;
-	size_t offset = blobCounter();
-	char pad[16] = { '#' };
-	size_t padSize = (0x10u - (offset & 0xfu)) & 0xfu;
-	if (padSize)
-	{
-		blobCounter() += padSize;
-		offset += padSize;
-		blobOut().write(pad, padSize);
-	}
-	blobCounter() += size;
-	blobOut().write((char*)v, size);
-	return offset;
-}
-
-template<typename T>
-size_t serializePtr(T const *v, int line)
-{
-	return serializePtr(v, sizeof(*v), line);
-}
-
-template<typename T>
-size_t serializeRef(T const &v, int line)
-{
-	return serializePtr(&v, sizeof(v), line);
-}
-
-
 
 enum class ParamAnnot
 {
@@ -270,6 +244,15 @@ struct CppDumpState
 	std::ostringstream source;
 	std::ostringstream header;
 	std::ostringstream table;
+	const size_t cacheSize = 0x1000000u;
+	size_t cacheOffset = 0u;
+	char *inMemBlob;
+	std::ofstream file;
+	CppDumpState():
+		file("cppdump/blob", std::ios_base::out | std::ios_base::binary)
+	{
+		inMemBlob = new char[cacheSize];
+	}
 	void dump()
 	{
 		// Assuming "cppdump/" exists in current working directory
@@ -300,6 +283,28 @@ struct CppDumpState
 		allNames.push_back(cur_name);
 		cur_name = "dump" + std::to_string(++curCounter);
 	}
+	void writeBlob(void const *pData, size_t size)
+	{
+		if (cacheSize < size)
+		{
+			if (cacheOffset)
+			{
+				file.write(inMemBlob, cacheOffset);
+			}
+			file.write((char*)pData, size);
+		}
+		else if (cacheOffset + size > cacheSize)
+		{
+			file.write(inMemBlob, cacheOffset);
+			cacheOffset = size;
+			memcpy(inMemBlob, pData, size);
+		}
+		else
+		{
+			memcpy(inMemBlob + cacheOffset, pData, size);
+			cacheOffset += size;
+		}
+	}
 	void addFunc(Method const &method, std::string const &funcName, std::string const &cppdump)
 	{
 		source << cppdump;
@@ -315,6 +320,11 @@ struct CppDumpState
 	~CppDumpState()
 	{
 		dump();
+		if (cacheOffset)
+		{
+			file.write(inMemBlob, cacheOffset);
+		}
+		delete inMemBlob;
 		{
 			std::ofstream file("cppdump/main.h");
 			file << "#include <vector>\n";
@@ -323,7 +333,7 @@ struct CppDumpState
 			{
 				file << "extern std::vector<std::pair<std::string, Event>> g_" << name << "_events;\n";
 			}
-			file << "static std::vector<*std::vector<std::pair<std::string, Event>>> g_all_events = {\n";
+			file << "static std::vector<std::vector<std::pair<std::string, Event>>*> g_all_events = {\n";
 			for (auto const &name : allNames)
 			{
 				file << "&g_" << name << "_events,\n";
@@ -337,6 +347,40 @@ static CppDumpState &getDumpState()
 {
 	static CppDumpState state;
 	return state;
+}
+
+static size_t serializePtr(void const *v, size_t size, int line)
+{
+	if (!v)
+	{
+		return 0u;
+	}
+	static std::unordered_map<int, size_t> writtenBytesPerLine;
+	writtenBytesPerLine[line] += size;
+	size_t offset = blobCounter();
+	char pad[16] = { '#' };
+	size_t padSize = (0x10u - (offset & 0xfu)) & 0xfu;
+	if (padSize)
+	{
+		blobCounter() += padSize;
+		offset += padSize;
+		getDumpState().writeBlob(pad, padSize);
+	}
+	blobCounter() += size;
+	getDumpState().writeBlob((char*)v, size);
+	return offset;
+}
+
+template<typename T>
+size_t serializePtr(T const *v, int line)
+{
+	return serializePtr(v, sizeof(*v), line);
+}
+
+template<typename T>
+size_t serializeRef(T const &v, int line)
+{
+	return serializePtr(&v, sizeof(v), line);
 }
 
 static std::ostringstream &out()
@@ -646,9 +690,8 @@ void printParamInit(std::stringstream &ss, Method const &method,
 					{
 						int subresId = i * desc->MipLevels + j;
 						// How to calculate it properly for all types like BC2, BC7?
-						size_t resourceSize = pSubres[subresId].SysMemSlicePitch;
-						if (!resourceSize)
-							resourceSize = desc->Height * pSubres[subresId].SysMemPitch;
+						size_t resourceSize = _calcSubresourceSize(desc, subresId, pSubres[subresId].SysMemPitch, pSubres[subresId].SysMemSlicePitch);
+						
 						assert(resourceSize);
 						size_t memhndl = serializePtr(pSubres[subresId].pSysMem, resourceSize, __LINE__);
 						size_t hndl = serializePtr(&pSubres[subresId], sizeof(*pSubres), __LINE__);
@@ -672,9 +715,7 @@ void printParamInit(std::stringstream &ss, Method const &method,
 				{
 					int subresId = j;
 					// How to calculate it properly for all types like BC2, BC7?
-					size_t resourceSize = pSubres[subresId].SysMemSlicePitch;
-					if (!resourceSize)
-						resourceSize = desc->Depth * desc->Height * pSubres[subresId].SysMemPitch;
+					size_t resourceSize = _calcSubresourceSize(desc, subresId, pSubres[subresId].SysMemPitch, pSubres[subresId].SysMemSlicePitch);
 					assert(resourceSize);
 					size_t memhndl = serializePtr(pSubres[subresId].pSysMem, resourceSize, __LINE__);
 					size_t hndl = serializePtr(&pSubres[subresId], sizeof(*pSubres), __LINE__);
@@ -952,7 +993,7 @@ void printParamFinale(std::stringstream &ss, Method const &method,
 		}
 		auto numparam = method.params.find(param.numparam)->second;
 		// It could've been size_t but we assume it's little endian and num < 2^31
-		int num = 0;
+		uint32_t num = 0;
 		assert(
 			numparam.undertype == "UINT"
 			|| numparam.undertype == "SIZE_T"
@@ -1046,35 +1087,54 @@ void dumpMethodEvent(
 #endif
 	if (method.name == "Map")
 	{
-		auto *pResource = *(void**)paramValues.find("pResource")->second.second;
+		auto *pResource = *(ID3D11Resource**)paramValues.find("pResource")->second.second;
 		auto Subresource = *(UINT*)paramValues.find("Subresource")->second.first;
+		auto MapType = *(D3D11_MAP*)paramValues.find("MapType")->second.first;
 		auto &mapTable = getMapTable();
 		auto *pMapped = *(D3D11_MAPPED_SUBRESOURCE**)paramValues.find("pMappedResource")->second.second;
-		if (!pMapped->pData)
+		D3D11_RESOURCE_DIMENSION Type = D3D11_RESOURCE_DIMENSION_UNKNOWN;
+		unwrapUnsafe(pResource)->GetType(&Type);
+		if (!pMapped->pData || *(HRESULT*)pRet || (MapType == D3D11_MAP_READ) || Type != D3D11_RESOURCE_DIMENSION_BUFFER)
 		{
-			// If map failed then do nothing
+			// If map failed/useless then do nothing
 			return;
 		}
-		assert(pMapped->DepthPitch);
+		//assert(pMapped->DepthPitch);
 		// double map?
-		assert(!mapTable[(size_t)pResource][(size_t)Subresource].pData);
-		mapTable[(size_t)pResource][(size_t)Subresource] = { pMapped->pData, pMapped->DepthPitch };
+		assert(mapTable.find({pResource, Subresource}) == mapTable.end());
+		auto &mshadow = mapTable[{pResource, Subresource}];
+		auto resourceSize = _calcSubresourceSize(unwrapUnsafe(pResource), Subresource, nullptr, pMapped->RowPitch, pMapped->DepthPitch);
+		mshadow.cover(pMapped->pData, resourceSize, Type == D3D11_MAP_WRITE_DISCARD);
 	}
 	else if (method.name == "Unmap")
 	{
-		auto *pResource = *(void**)paramValues.find("pResource")->second.first;
+		auto *pResource = *(ID3D11Resource**)paramValues.find("pResource")->second.first;
 		auto Subresource = *(UINT*)paramValues.find("Subresource")->second.first;
 		auto &mapTable = getMapTable();
-		// not 0, but it's ~possible if Map was the first function to write to blob
-		assert(mapTable[(size_t)pResource][(size_t)Subresource].pData);
-		auto mapDesc = mapTable[(size_t)pResource][(size_t)Subresource];
+		if (mapTable.find({ pResource, Subresource }) == mapTable.end())
+		{
+			// Means Map failed or was discarded
+			return;
+		}
+		auto const &mshadow = mapTable[{pResource, Subresource}];
+		ss << __INDENT__ << "auto &mapTable = getMapTable();\n";
+		ss << __INDENT__ << "auto mapDesc = mapTable[{tmp_pResource, tmp_Subresource}];\n";
+		mshadow.update([&](void const *pPtr, size_t size)
+		{
+			size_t offset = (size_t)pPtr - (size_t)mshadow.realPtr;
+			size_t hndl = serializePtr(pPtr, size, __LINE__);
+			ss << __INDENT__ << " memcpy(mapDesc.pData + " << offset << ", " <<
+				" getInBlobPtr<void>(" << hndl << "), " << size << ");\n";
+		});
+		/*
 		size_t hndl = serializePtr(mapDesc.pData, mapDesc.size, __LINE__);
 		ss << __INDENT__ << "auto &mapTable = getMapTable();\n";
 		ss << __INDENT__ << "auto mapDesc = mapTable[(size_t)tmp_pResource][(size_t)tmp_Subresource];\n";
 		ss << __INDENT__ << " memcpy(mapDesc.pData, " <<
 			" getInBlobPtr<void>(" << hndl << "), mapDesc.size);\n";
-		mapTable[(size_t)pResource].erase((size_t)Subresource);
-		ss << __INDENT__ << "mapTable[(size_t)tmp_pResource].erase((size_t)tmp_Subresource);\n";
+		*/
+		mapTable.erase({ pResource, Subresource });
+		ss << __INDENT__ << "mapTable.erase({tmp_pResource, tmp_Subresource});\n";
 	}
 	else if (method.name == "CreateSwapChain")
 	{
@@ -1127,7 +1187,7 @@ void dumpMethodEvent(
 	if (method.name == "Map")
 	{
 		ss << __INDENT__ << "auto &mapTable = getMapTable();\n";
-		ss << __INDENT__ << "mapTable[(size_t)tmp_pResource][(size_t)tmp_Subresource] = { tmp_pMappedResource.pData, tmp_pMappedResource.DepthPitch };\n";
+		ss << __INDENT__ << "mapTable[{tmp_pResource, tmp_Subresource}] = { (char*)tmp_pMappedResource.pData, tmp_pMappedResource.DepthPitch };\n";
 	}
 	/*out() << "  " << "getInBlobPtr<DXGI_SURFACE_DESC>(" << serializePtr(pDesc) << "), \n";
 	out() << "  " << "getInBlobRef<UINT>(" << serializeRef(NumSurfaces) << ", \n";

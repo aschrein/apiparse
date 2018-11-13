@@ -13,6 +13,7 @@
 #include <dxgi1_3.h>
 #include <dxgidebug.h>
 #include <unordered_map>
+#include <map>
 #include <fstream>
 #include <assert.h>
 #include <mutex>
@@ -43,12 +44,12 @@ std::unordered_map<size_t, size_t> &getInterfaceTable();
 
 struct MapDesc
 {
-	void *pData;
+	char *pData;
 	size_t size;
 };
 
 // pResource -> subresourceID -> MapDesc
-std::unordered_map<size_t, std::unordered_map<size_t, MapDesc>> &getMapTable();
+std::map<std::pair<ID3D11Resource *, UINT>, MapDesc> &getMapTable();
 
 template<typename T> T *getInterface(size_t index)
 {

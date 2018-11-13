@@ -3,7 +3,7 @@
 #include <vector>
 #include <string>
 #include <cpphelper.h>
-#include <main.h>
+#include <cppdump/main.h>
 
 static ID3D11Device*            g_pd3dDevice = NULL;
 static ID3D11DeviceContext*     g_pd3dDeviceContext = NULL;
@@ -93,9 +93,9 @@ std::unordered_map<size_t, size_t> &getInterfaceTable()
 }
 
 
-std::unordered_map<size_t, std::unordered_map<size_t, MapDesc>> &getMapTable()
+std::map<std::pair<ID3D11Resource *, UINT>, MapDesc> &getMapTable()
 {
-	static std::unordered_map<size_t, std::unordered_map<size_t, MapDesc>> table;
+	static std::map<std::pair<ID3D11Resource *, UINT>, MapDesc> table;
 	return table;
 }
 
@@ -160,6 +160,9 @@ int main(int, char**)
 				|| item.first.find("Clear") != std::string::npos
 				)
 				item.second();
+
+			if (item.first.find("Present") != std::string::npos)
+				Sleep(50u);
 			MSG msg;
 			ZeroMemory(&msg, sizeof(msg));
 			if (PeekMessage(&msg, NULL, 0U, 0U, PM_REMOVE))
