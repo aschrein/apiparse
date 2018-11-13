@@ -63,3 +63,9 @@ Split sources
 Dump to ./cppdump
 Change desc->Height * pSubres[subresId].SysMemPitch -> resourceSize
 ---
+a476fb6
+---
+Next commit:
+
+A couple of fixes for release build
+---

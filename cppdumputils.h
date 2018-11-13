@@ -194,12 +194,14 @@ static size_t getEventNumber()
 	return counter++;
 }
 
-static size_t serializePtr(void const *v, size_t size)
+static size_t serializePtr(void const *v, size_t size, int line)
 {
 	if (!v)
 	{
 		return 0u;
 	}
+	static std::unordered_map<int, size_t> writtenBytesPerLine;
+	writtenBytesPerLine[line] += size;
 	size_t offset = blobCounter();
 	char pad[16] = { '#' };
 	size_t padSize = (0x10u - (offset & 0xfu)) & 0xfu;
@@ -215,15 +217,15 @@ static size_t serializePtr(void const *v, size_t size)
 }
 
 template<typename T>
-size_t serializePtr(T const *v)
+size_t serializePtr(T const *v, int line)
 {
-	return serializePtr(v, sizeof(*v));
+	return serializePtr(v, sizeof(*v), line);
 }
 
 template<typename T>
-size_t serializeRef(T const &v)
+size_t serializeRef(T const &v, int line)
 {
-	return serializePtr(&v, sizeof(v));
+	return serializePtr(&v, sizeof(v), line);
 }
 
 
@@ -272,6 +274,8 @@ struct CppDumpState
 	{
 		// Assuming "cppdump/" exists in current working directory
 		{
+			//char buf[256];
+			//GetCurrentDirectoryA(256, buf);
 			std::ofstream file("cppdump/" + cur_name + ".cpp");
 			file << "#include <cpphelper.h>\n";
 			file << "extern HWND g_window;\n";
@@ -426,10 +430,10 @@ void printParamInit(std::stringstream &ss, Method const &method,
 				if (desc && pSubres)
 				{
 					int num = desc->ByteWidth;
-					size_t hndl = serializePtr(pSubres, sizeof(*pSubres));
+					size_t hndl = serializePtr(pSubres, sizeof(*pSubres), __LINE__);
 					ss << __INDENT__ << param.undertype << " tmp_" << param.name
 						<< " = *getInBlobPtr<" << param.undertype << ">(" << hndl << ");\n";
-					size_t memhndl = serializePtr(pSubres->pSysMem, num);
+					size_t memhndl = serializePtr(pSubres->pSysMem, num, __LINE__);
 					ss << __INDENT__ << "tmp_" << param.name
 						<< ".pSysMem = getInBlobPtr<void>(" << memhndl << ");\n";
 				}
@@ -448,7 +452,7 @@ void printParamInit(std::stringstream &ss, Method const &method,
 		// It's an array of floats
 		if (method.name == "ClearRenderTargetView" && param.name == "ColorRGBA")
 		{
-			size_t hndl = serializePtr(*(void**)pData.first, param.undersize * 4);
+			size_t hndl = serializePtr(*(void**)pData.first, param.undersize * 4, __LINE__);
 			ss << __INDENT__ << param.undertype << " tmp_" << param.name << "[4];\n";
 			ss << __INDENT__ << " memcpy(tmp_" << param.name << ", " <<
 				" getInBlobPtr<" << param.undertype << ">(" << hndl << "), 16u);\n";
@@ -501,7 +505,7 @@ void printParamInit(std::stringstream &ss, Method const &method,
 					<< "}};\n";
 				return;
 			}
-			size_t hndl = serializePtr(pData.first, param.size);
+			size_t hndl = serializePtr(pData.first, param.size, __LINE__);
 			ss << __INDENT__ << param.type << " tmp_" << param.name << " = getInBlobRef<" << param.undertype << ">(" << hndl << ");\n";
 			//assert(false && "unsopported");
 #endif
@@ -533,14 +537,14 @@ void printParamInit(std::stringstream &ss, Method const &method,
 								<< " = nullptr;\n";
 							return;
 						}
-						size_t hndl = serializePtr(*(void**)pData.first, *num * param.undersize);
+						size_t hndl = serializePtr(*(void**)pData.first, *num * param.undersize, __LINE__);
 						ss << __INDENT__ << param.undertype << " tmp_" << param.name << "[" << *num << "];\n";
 
 						ss << __INDENT__ << " memcpy(tmp_" << param.name << ", " <<
 							" getInBlobPtr<" << param.undertype << ">(" << hndl << "), " << *num * param.undersize << ");\n";
 						return;
 					}
-					size_t hndl = serializePtr(*(void**)pData.first, param.undersize);
+					size_t hndl = serializePtr(*(void**)pData.first, param.undersize, __LINE__);
 					ss << __INDENT__ << param.undertype << " tmp_" << param.name
 						<< " = *getInBlobPtr<" << param.undertype << ">(" << hndl << ");\n";
 #endif
@@ -569,7 +573,7 @@ void printParamInit(std::stringstream &ss, Method const &method,
 		// we don't care about non interfaces either
 		if (!param.isInterface)
 		{
-			size_t hndl = serializePtr(*(void**)pData.first, param.undersize);
+			size_t hndl = serializePtr(*(void**)pData.first, param.undersize, __LINE__);
 			ss << __INDENT__ << param.undertype << " shadow_tmp_" << param.name << ";\n";
 
 			ss << __INDENT__ << param.type << " tmp_" << param.name << " = " <<
@@ -646,8 +650,8 @@ void printParamInit(std::stringstream &ss, Method const &method,
 						if (!resourceSize)
 							resourceSize = desc->Height * pSubres[subresId].SysMemPitch;
 						assert(resourceSize);
-						size_t memhndl = serializePtr(pSubres[subresId].pSysMem, resourceSize);
-						size_t hndl = serializePtr(&pSubres[subresId], sizeof(*pSubres));
+						size_t memhndl = serializePtr(pSubres[subresId].pSysMem, resourceSize, __LINE__);
+						size_t hndl = serializePtr(&pSubres[subresId], sizeof(*pSubres), __LINE__);
 						ss << __INDENT__ << "tmp_" << param.name
 							<< "[" << subresId << "]" << " = *getInBlobPtr<" << param.undertype << ">(" << hndl << ");\n";
 						ss << __INDENT__ << "tmp_" << param.name
@@ -657,7 +661,29 @@ void printParamInit(std::stringstream &ss, Method const &method,
 			}
 			else if (method.name == "CreateTexture3D")
 			{
-				assert(false && "unsopported");
+				D3D11_TEXTURE3D_DESC *desc = *(D3D11_TEXTURE3D_DESC**)paramValues.find("pDesc")->second.first;
+				int num = desc->MipLevels;
+
+				ss << __INDENT__ << param.undertype << " tmp_" << param.name << "[" << num << "];\n";
+
+				assert(desc->MipLevels);
+				//ss << __INDENT__ << "for (uint32_t i = 0; i < tmp_pDesc->ArraySize * tmp_pDesc->MipLevels; i++)\n";
+				for (uint32_t j = 0; j < desc->MipLevels; j++)
+				{
+					int subresId = j;
+					// How to calculate it properly for all types like BC2, BC7?
+					size_t resourceSize = pSubres[subresId].SysMemSlicePitch;
+					if (!resourceSize)
+						resourceSize = desc->Depth * desc->Height * pSubres[subresId].SysMemPitch;
+					assert(resourceSize);
+					size_t memhndl = serializePtr(pSubres[subresId].pSysMem, resourceSize, __LINE__);
+					size_t hndl = serializePtr(&pSubres[subresId], sizeof(*pSubres), __LINE__);
+					ss << __INDENT__ << "tmp_" << param.name
+						<< "[" << subresId << "]" << " = *getInBlobPtr<" << param.undertype << ">(" << hndl << ");\n";
+					ss << __INDENT__ << "tmp_" << param.name
+						<< "[" << subresId << "].pSysMem = getInBlobPtr<void>(" << memhndl << ");\n";
+				}
+				//assert(false && "unsopported");
 			}
 			else
 			{
@@ -707,13 +733,13 @@ void printParamInit(std::stringstream &ss, Method const &method,
 					ss << __INDENT__ << param.undertype << " tmp_" << param.name << "[" << num << "];\n";
 					for (uint32_t i = 0; i < num; i++)
 					{
-						size_t hndl = serializePtr(pBase + i * param.undersize, param.undersize);
+						size_t hndl = serializePtr(pBase + i * param.undersize, param.undersize, __LINE__);
 						ss << __INDENT__ << "tmp_" << param.name << "[" << i << "] = *getInBlobPtr<" << param.undertype << ">(" << hndl << "),\n";
 					}
 					for (uint32_t i = 0; i < num; i++)
 					{
 						D3D11_INPUT_ELEMENT_DESC desc = ((D3D11_INPUT_ELEMENT_DESC*)pBase)[i];
-						size_t hndl = serializePtr(desc.SemanticName, strlen(desc.SemanticName) + 1);
+						size_t hndl = serializePtr(desc.SemanticName, strlen(desc.SemanticName) + 1, __LINE__);
 						ss << __INDENT__ << "tmp_" << param.name << "[" << i << "].SemanticName = "
 							<< "getInBlobPtr<char>(" << hndl << ");\n";
 					}
@@ -732,7 +758,7 @@ void printParamInit(std::stringstream &ss, Method const &method,
 					}
 					else
 					{
-						size_t hndl = serializePtr(pBase + i * param.undersize, param.undersize);
+						size_t hndl = serializePtr(pBase + i * param.undersize, param.undersize, __LINE__);
 						ss << __INDENT__ << "getInBlobRef<" << param.undertype << ">(" << hndl << "),\n";
 					}
 				}
@@ -747,7 +773,7 @@ void printParamInit(std::stringstream &ss, Method const &method,
 		else
 		{
 			assert(param.undertype == "void");
-			size_t hndl = serializePtr(pBase, num);
+			size_t hndl = serializePtr(pBase, num, __LINE__);
 			ss << __INDENT__ << "char shadow_tmp_" << param.name << "[" << num << "];\n";
 			ss << __INDENT__ << param.type << " tmp_" << param.name << " = " <<
 				" (void*)shadow_tmp_" << param.name << ";\n";
@@ -1024,6 +1050,11 @@ void dumpMethodEvent(
 		auto Subresource = *(UINT*)paramValues.find("Subresource")->second.first;
 		auto &mapTable = getMapTable();
 		auto *pMapped = *(D3D11_MAPPED_SUBRESOURCE**)paramValues.find("pMappedResource")->second.second;
+		if (!pMapped->pData)
+		{
+			// If map failed then do nothing
+			return;
+		}
 		assert(pMapped->DepthPitch);
 		// double map?
 		assert(!mapTable[(size_t)pResource][(size_t)Subresource].pData);
@@ -1037,7 +1068,7 @@ void dumpMethodEvent(
 		// not 0, but it's ~possible if Map was the first function to write to blob
 		assert(mapTable[(size_t)pResource][(size_t)Subresource].pData);
 		auto mapDesc = mapTable[(size_t)pResource][(size_t)Subresource];
-		size_t hndl = serializePtr(mapDesc.pData, mapDesc.size);
+		size_t hndl = serializePtr(mapDesc.pData, mapDesc.size, __LINE__);
 		ss << __INDENT__ << "auto &mapTable = getMapTable();\n";
 		ss << __INDENT__ << "auto mapDesc = mapTable[(size_t)tmp_pResource][(size_t)tmp_Subresource];\n";
 		ss << __INDENT__ << " memcpy(mapDesc.pData, " <<

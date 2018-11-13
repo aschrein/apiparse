@@ -80,7 +80,7 @@ char const *blobIn()
 		{
 			pBlob++;
 		}
-		assert(file.read(pBlob, size));
+		file.read(pBlob, size);
 		init = true;
 	}
 	return pBlob;
