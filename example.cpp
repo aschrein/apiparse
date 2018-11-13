@@ -2,6 +2,8 @@
 #include <tchar.h>
 #include <vector>
 #include <string>
+#include <cpphelper.h>
+#include <main.h>
 
 static ID3D11Device*            g_pd3dDevice = NULL;
 static ID3D11DeviceContext*     g_pd3dDeviceContext = NULL;
@@ -59,7 +61,55 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 HWND g_window;
 typedef void(*Event)(void);
-extern std::vector<std::pair<std::string, Event>> g_events;
+std::vector<std::pair<std::string, Event>> g_events;
+
+char const *blobIn()
+{
+	static bool init = false;
+	static char *pBlob = nullptr;
+	static void *pMem = nullptr;
+	if (!init)
+	{
+		std::ifstream file("cppdump/blob", std::ios_base::in | std::ios_base::binary | std::ios::ate);
+		assert(file.is_open());
+		std::streamsize size = file.tellg();
+		file.seekg(0, std::ios::beg);
+		pMem = malloc(size + 0x10u);
+		pBlob = (char*)pMem;
+		while (((size_t)pBlob) & 0xfu)
+		{
+			pBlob++;
+		}
+		assert(file.read(pBlob, size));
+		init = true;
+	}
+	return pBlob;
+}
+
+std::unordered_map<size_t, size_t> &getInterfaceTable()
+{
+	static std::unordered_map<size_t, size_t> table;
+	return table;
+}
+
+
+std::unordered_map<size_t, std::unordered_map<size_t, MapDesc>> &getMapTable()
+{
+	static std::unordered_map<size_t, std::unordered_map<size_t, MapDesc>> table;
+	return table;
+}
+
+void flattenEvents()
+{
+	g_events.clear();
+	for (auto const *pRef : g_all_events)
+	{
+		for (auto const &item : *pRef)
+		{
+			g_events.push_back(item);
+		}
+	}
+}
 
 int main(int, char**)
 {
@@ -73,7 +123,7 @@ int main(int, char**)
   {
     return 1;
   }*/
-
+	flattenEvents();
 	for (auto const &item : g_events)
 	{
 		item.second();

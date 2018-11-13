@@ -19,10 +19,11 @@
 #include <atomic>
 #include <thread>
 
-static std::ofstream &out()
+/*static std::ofstream &out()
 {
 	static bool init = false;
-  static std::ofstream file("dump.cpp");
+	//std::ostringstream file;
+	static std::ofstream file("dump.cpp");
 	if (!init)
 	{
 		init = true;
@@ -50,11 +51,11 @@ static std::ofstream &tableOut()
 	static std::ofstream file("table.inc", std::ios_base::out | std::ios_base::binary);
 	file.setf(std::ios::unitbuf);
 	return file;
-}
+}*/
 
 static std::ofstream &blobOut()
 {
-	static std::ofstream file("blob", std::ios_base::out | std::ios_base::binary);
+	static std::ofstream file("cppdump/blob", std::ios_base::out | std::ios_base::binary);
 	file.setf(std::ios::unitbuf);
 	return file;
 }
@@ -63,29 +64,6 @@ static size_t &blobCounter()
 {
 	static size_t counter = 0;
 	return counter;
-}
-
-static char const *blobIn()
-{
-	static bool init = false;
-	static char *pBlob = nullptr;
-	static void *pMem = nullptr;
-	if (!init)
-	{
-		std::ifstream file("blob", std::ios_base::in | std::ios_base::binary | std::ios::ate);
-		assert(file.is_open());
-		std::streamsize size = file.tellg();
-		file.seekg(0, std::ios::beg);
-		pMem = malloc(size + 0x10u);
-		pBlob = (char*)pMem;
-		while (((size_t)pBlob) & 0xfu)
-		{
-			pBlob++;
-		}
-		assert(file.read(pBlob, size));
-		init = true;
-	}
-	return pBlob;
 }
 
 std::mutex &getGlobalLock()
@@ -196,12 +174,6 @@ static std::vector<unsigned char> &getBlob()
   return blob;
 }
 
-static std::unordered_map<size_t, size_t> &getInterfaceTable()
-{
-	static std::unordered_map<size_t, size_t> table;
-	return table;
-}
-
 struct MapDesc
 {
 	void *pData;
@@ -215,20 +187,6 @@ static std::unordered_map<size_t, std::unordered_map<size_t, MapDesc>> &getMapTa
 	return table;
 }
 
-template<typename T> T *getInterface(size_t index)
-{
-	if (!index)
-	{
-		return nullptr;
-	}
-	assert(getInterfaceTable().find(index) != getInterfaceTable().end());
-	return (T*)getInterfaceTable().find(index)->second;
-}
-
-static void setInterface(size_t index, void *ptr)
-{
-	getInterfaceTable()[index] = (size_t)ptr;
-}
 
 static size_t getEventNumber()
 {
@@ -268,23 +226,7 @@ size_t serializeRef(T const &v)
 	return serializePtr(&v, sizeof(v));
 }
 
-template<typename T>
-T const *getInBlobPtr(size_t offset)
-{
-	if (!offset)
-	{
-		return nullptr;
-	}
-  auto blob = blobIn();
-  return (T *)&blob[offset];
-}
 
-template<typename T>
-T const &getInBlobRef(size_t offset)
-{
-	auto blob = blobIn();
-	return *(T const *)&blob[offset];
-}
 
 enum class ParamAnnot
 {
@@ -316,6 +258,87 @@ struct Method
 	std::unordered_map<std::string, Param> params;
 	std::vector<std::string> paramsOrdered;
 };
+
+struct CppDumpState
+{
+	size_t curFuncCounter = 0u;
+	size_t curCounter = 0u;
+	std::vector<std::string> allNames;
+	std::string cur_name = "dump0";
+	std::ostringstream source;
+	std::ostringstream header;
+	std::ostringstream table;
+	void dump()
+	{
+		// Assuming "cppdump/" exists in current working directory
+		{
+			std::ofstream file("cppdump/" + cur_name + ".cpp");
+			file << "#include <cpphelper.h>\n";
+			file << "extern HWND g_window;\n";
+			file << "#include \"" << cur_name << ".h\"\n";
+			file << "typedef void(*Event)(void);\n";
+			file << "std::vector<std::pair<std::string, Event>> g_" << cur_name << "_events = {\n";
+			file << "#include \"" << cur_name << ".tb\"\n";
+			file << "};\n";
+			file << source.str();
+			source = std::ostringstream();
+		}
+		{
+			std::ofstream file("cppdump/" + cur_name + ".h");
+			file << header.str();
+			header = std::ostringstream();
+		}
+		{
+			std::ofstream file("cppdump/" + cur_name + ".tb");
+			file << table.str();
+			table = std::ostringstream();
+		}
+		allNames.push_back(cur_name);
+		cur_name = "dump" + std::to_string(++curCounter);
+	}
+	void addFunc(Method const &method, std::string const &funcName, std::string const &cppdump)
+	{
+		source << cppdump;
+		table << "{\"" << funcName << "\", " << funcName << "},\n";
+		header << "static void " << funcName << "();\n";
+		curFuncCounter++;
+		if (curFuncCounter > 1000)
+		{
+			curFuncCounter = 0;
+			dump();
+		}
+	}
+	~CppDumpState()
+	{
+		dump();
+		{
+			std::ofstream file("cppdump/main.h");
+			file << "#include <vector>\n";
+			file << "typedef void(*Event)(void);\n";
+			for (auto const &name : allNames)
+			{
+				file << "extern std::vector<std::pair<std::string, Event>> g_" << name << "_events;\n";
+			}
+			file << "static std::vector<*std::vector<std::pair<std::string, Event>>> g_all_events = {\n";
+			for (auto const &name : allNames)
+			{
+				file << "&g_" << name << "_events,\n";
+			}
+			file << "};\n";
+		}
+	}
+};
+
+static CppDumpState &getDumpState()
+{
+	static CppDumpState state;
+	return state;
+}
+
+static std::ostringstream &out()
+{
+	return getDumpState().source;
+}
 
 struct Interface
 {
@@ -618,7 +641,12 @@ void printParamInit(std::stringstream &ss, Method const &method,
 					for (uint32_t j = 0; j < desc->MipLevels; j++)
 					{
 						int subresId = i * desc->MipLevels + j;
-						size_t memhndl = serializePtr(pSubres[subresId].pSysMem, desc->Height * pSubres[subresId].SysMemPitch);
+						// How to calculate it properly for all types like BC2, BC7?
+						size_t resourceSize = pSubres[subresId].SysMemSlicePitch;
+						if (!resourceSize)
+							resourceSize = desc->Height * pSubres[subresId].SysMemPitch;
+						assert(resourceSize);
+						size_t memhndl = serializePtr(pSubres[subresId].pSysMem, resourceSize);
 						size_t hndl = serializePtr(&pSubres[subresId], sizeof(*pSubres));
 						ss << __INDENT__ << "tmp_" << param.name
 							<< "[" << subresId << "]" << " = *getInBlobPtr<" << param.undertype << ">(" << hndl << ");\n";
@@ -877,7 +905,10 @@ void printParamFinale(std::stringstream &ss, Method const &method,
 		}
 		assert(param.ptrs == 2);
 		assert(param.isInterface);
-		ss << __INDENT__ << "setInterface(0x" << **(void***)pData.second << ", tmp_" << param.name << ");\n";
+		if (*(void***)pData.second)
+			ss << __INDENT__ << "setInterface(0x" << **(void***)pData.second << ", tmp_" << param.name << ");\n";
+		else
+			ss << __INDENT__ << "// " << param.name << " was null\n";
 	}
 	else if (param.annot == ParamAnnot::_OUT_ARRAY_)
 	{
@@ -1076,9 +1107,7 @@ void dumpMethodEvent(
 
 	//out() << "  " << "setInterface(" << *ppSurface << ", &tmp_ppSurface" << ");\n";
 	ss << "}\n";
-	tableOut() << "{\"" << funcName << "\", " << funcName << "},\n";
-	declOut() << "static void " << funcName << "();\n";
-	out() << ss.str();
+	getDumpState().addFunc(method, funcName, ss.str());
 }
 
 void dumpFunctionEvent(
@@ -1154,9 +1183,7 @@ void dumpFunctionEvent(
 		printParamFinale(ss, method, paramValues, item.first);
 	}
 	ss << "}\n";
-	tableOut() << "{\"" << funcName << "\", " << funcName << "},\n";
-	declOut() << "static void " << funcName << "();\n";
-	out() << ss.str();
+	getDumpState().addFunc(method, funcName, ss.str());
 }
 
 #define BRK() {}

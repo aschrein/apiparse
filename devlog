@@ -55,3 +55,11 @@ Change .SysMemSlicePitch -> desc->Height * pSubres[subresId].SysMemPitch
 Proper handling of ClearRenderTargetView
 Blob alignment
 ---
+0f742c3
+---
+Next commit:
+
+Split sources
+Dump to ./cppdump
+Change desc->Height * pSubres[subresId].SysMemPitch -> resourceSize
+---
