@@ -92,6 +92,33 @@ int main(int, char**)
   bool oneshot = false;
   while (msg.message != WM_QUIT)
   {
+		for (auto const &item : g_events)
+		{
+			if (
+				item.first.find("Draw") != std::string::npos
+				|| item.first.find("Present") != std::string::npos
+				|| item.first.find("PS") != std::string::npos
+				|| item.first.find("VS") != std::string::npos
+				|| item.first.find("HS") != std::string::npos
+				|| item.first.find("DS") != std::string::npos
+				|| item.first.find("GS") != std::string::npos
+				|| item.first.find("OM") != std::string::npos
+				|| item.first.find("RS") != std::string::npos
+				|| item.first.find("IA") != std::string::npos
+				|| item.first.find("Map") != std::string::npos
+				|| item.first.find("Unmap") != std::string::npos
+				|| item.first.find("Clear") != std::string::npos
+				)
+				item.second();
+			MSG msg;
+			ZeroMemory(&msg, sizeof(msg));
+			if (PeekMessage(&msg, NULL, 0U, 0U, PM_REMOVE))
+			{
+				TranslateMessage(&msg);
+				DispatchMessage(&msg);
+				continue;
+			}
+		}
     // Poll and handle messages (inputs, window resize, etc.)
     // You can read the io.WantCaptureMouse, io.WantCaptureKeyboard flags to tell if dear imgui wants to use your inputs.
     // - When io.WantCaptureMouse is true, do not dispatch mouse input data to your main application.

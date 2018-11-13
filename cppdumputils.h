@@ -65,22 +65,27 @@ static size_t &blobCounter()
 	return counter;
 }
 
-static std::vector<char> const &blobIn()
+static char const *blobIn()
 {
 	static bool init = false;
-	static std::vector<char> blob;
+	static char *pBlob = nullptr;
+	static void *pMem = nullptr;
 	if (!init)
 	{
 		std::ifstream file("blob", std::ios_base::in | std::ios_base::binary | std::ios::ate);
 		assert(file.is_open());
 		std::streamsize size = file.tellg();
 		file.seekg(0, std::ios::beg);
-
-		blob = std::vector<char>(size);
-		assert(file.read(blob.data(), size));
+		pMem = malloc(size + 0x10u);
+		pBlob = (char*)pMem;
+		while (((size_t)pBlob) & 0xfu)
+		{
+			pBlob++;
+		}
+		assert(file.read(pBlob, size));
 		init = true;
 	}
-	return blob;
+	return pBlob;
 }
 
 std::mutex &getGlobalLock()
@@ -212,6 +217,10 @@ static std::unordered_map<size_t, std::unordered_map<size_t, MapDesc>> &getMapTa
 
 template<typename T> T *getInterface(size_t index)
 {
+	if (!index)
+	{
+		return nullptr;
+	}
 	assert(getInterfaceTable().find(index) != getInterfaceTable().end());
 	return (T*)getInterfaceTable().find(index)->second;
 }
@@ -227,19 +236,6 @@ static size_t getEventNumber()
 	return counter++;
 }
 
-template<typename T>
-size_t serializePtr(T const *v)
-{
-	if (!v)
-	{
-		return 0u;
-	}
-	size_t offset = blobCounter();
-	blobCounter() += sizeof(*v);
-	blobOut().write((char*)v, sizeof(*v));
-	return offset;
-}
-
 static size_t serializePtr(void const *v, size_t size)
 {
 	if (!v)
@@ -247,18 +243,29 @@ static size_t serializePtr(void const *v, size_t size)
 		return 0u;
 	}
 	size_t offset = blobCounter();
+	char pad[16] = { '#' };
+	size_t padSize = (0x10u - (offset & 0xfu)) & 0xfu;
+	if (padSize)
+	{
+		blobCounter() += padSize;
+		offset += padSize;
+		blobOut().write(pad, padSize);
+	}
 	blobCounter() += size;
 	blobOut().write((char*)v, size);
 	return offset;
 }
 
 template<typename T>
+size_t serializePtr(T const *v)
+{
+	return serializePtr(v, sizeof(*v));
+}
+
+template<typename T>
 size_t serializeRef(T const &v)
 {
-	size_t offset = blobCounter();
-	blobCounter() += sizeof(v);
-	blobOut().write((char*)&v, sizeof(v));
-	return offset;
+	return serializePtr(&v, sizeof(v));
 }
 
 template<typename T>
@@ -268,14 +275,14 @@ T const *getInBlobPtr(size_t offset)
 	{
 		return nullptr;
 	}
-  auto &blob = blobIn();
+  auto blob = blobIn();
   return (T *)&blob[offset];
 }
 
 template<typename T>
 T const &getInBlobRef(size_t offset)
 {
-	auto &blob = blobIn();
+	auto blob = blobIn();
 	return *(T const *)&blob[offset];
 }
 
@@ -414,6 +421,15 @@ void printParamInit(std::stringstream &ss, Method const &method,
 			{
 				assert(false && "unsopported");
 			}
+		}
+		// It's an array of floats
+		if (method.name == "ClearRenderTargetView" && param.name == "ColorRGBA")
+		{
+			size_t hndl = serializePtr(*(void**)pData.first, param.undersize * 4);
+			ss << __INDENT__ << param.undertype << " tmp_" << param.name << "[4];\n";
+			ss << __INDENT__ << " memcpy(tmp_" << param.name << ", " <<
+				" getInBlobPtr<" << param.undertype << ">(" << hndl << "), 16u);\n";
+			return;
 		}
 #endif
 		if (param.ptrs == 0)
@@ -596,13 +612,13 @@ void printParamInit(std::stringstream &ss, Method const &method,
 				ss << __INDENT__ << param.undertype << " tmp_" << param.name << "[" << num << "];\n";
 					
 				assert(desc->ArraySize * desc->MipLevels);
-				//ss << __INDENT__ << "for (int i = 0; i < tmp_pDesc->ArraySize * tmp_pDesc->MipLevels; i++)\n";
-				for (int i = 0; i < desc->ArraySize; i++)
+				//ss << __INDENT__ << "for (uint32_t i = 0; i < tmp_pDesc->ArraySize * tmp_pDesc->MipLevels; i++)\n";
+				for (uint32_t i = 0; i < desc->ArraySize; i++)
 				{
-					for (int j = 0; j < desc->MipLevels; j++)
+					for (uint32_t j = 0; j < desc->MipLevels; j++)
 					{
 						int subresId = i * desc->MipLevels + j;
-						size_t memhndl = serializePtr(pSubres[subresId].pSysMem, pSubres[subresId].SysMemSlicePitch);
+						size_t memhndl = serializePtr(pSubres[subresId].pSysMem, desc->Height * pSubres[subresId].SysMemPitch);
 						size_t hndl = serializePtr(&pSubres[subresId], sizeof(*pSubres));
 						ss << __INDENT__ << "tmp_" << param.name
 							<< "[" << subresId << "]" << " = *getInBlobPtr<" << param.undertype << ">(" << hndl << ");\n";
@@ -638,7 +654,7 @@ void printParamInit(std::stringstream &ss, Method const &method,
 				ss << __INDENT__ << param.undertype << " *tmp_" << param.name
 					<< "[] = {\n";
 				void **pArr = *(void***)pData.first;
-				for (int i = 0; i < num; i++)
+				for (uint32_t i = 0; i < num; i++)
 				{
 					ss << __INDENT__ << "getInterface<" << param.undertype << ">(0x" << pArr[i] << "), \n";
 				}
@@ -661,12 +677,12 @@ void printParamInit(std::stringstream &ss, Method const &method,
 				if (param.name == "pInputElementDescs" && method.name == "CreateInputLayout")
 				{
 					ss << __INDENT__ << param.undertype << " tmp_" << param.name << "[" << num << "];\n";
-					for (int i = 0; i < num; i++)
+					for (uint32_t i = 0; i < num; i++)
 					{
 						size_t hndl = serializePtr(pBase + i * param.undersize, param.undersize);
 						ss << __INDENT__ << "tmp_" << param.name << "[" << i << "] = *getInBlobPtr<" << param.undertype << ">(" << hndl << "),\n";
 					}
-					for (int i = 0; i < num; i++)
+					for (uint32_t i = 0; i < num; i++)
 					{
 						D3D11_INPUT_ELEMENT_DESC desc = ((D3D11_INPUT_ELEMENT_DESC*)pBase)[i];
 						size_t hndl = serializePtr(desc.SemanticName, strlen(desc.SemanticName) + 1);
@@ -676,7 +692,7 @@ void printParamInit(std::stringstream &ss, Method const &method,
 					return;
 				}
 				ss << __INDENT__ << param.undertype << " tmp_" << param.name << "[" << num << "] = {\n";
-				for (int i = 0; i < num; i++)
+				for (uint32_t i = 0; i < num; i++)
 				{
 					if (param.undertype == "INT")
 					{
@@ -806,7 +822,10 @@ void printParam(std::stringstream &ss, Method const &method, Param const &param,
 			{
 				if (*(void**)pData.first)
 				{
-					if (param.name == "pDesc" && method.name == "GetDisplayModeList")
+					if (
+						param.name == "pDesc" && method.name == "GetDisplayModeList"
+						|| param.name == "ColorRGBA" && method.name == "ClearRenderTargetView"
+						)
 						ss << __INDENT__ << " tmp_" << param.name;
 					else
 						ss << __INDENT__ << " &tmp_" << param.name;
@@ -897,9 +916,9 @@ void printParamFinale(std::stringstream &ss, Method const &method,
 		}
 		
 		
-		//ss << __INDENT__ <<  "for (int i = 0; i < tmp_" << numparam.name << "; i++)\n";
+		//ss << __INDENT__ <<  "for (uint32_t i = 0; i < tmp_" << numparam.name << "; i++)\n";
 		void **pArr = *(void***)pData.second;
-		for (int i = 0; i < num; i++)
+		for (uint32_t i = 0; i < num; i++)
 		{
 			ss << __INDENT__ << "setInterface(0x" << pArr[0] << ", tmp_" << param.name << "[" << i << "]);\n";
 		}
@@ -933,6 +952,13 @@ void dumpMethodEvent(
 		|| methName.find("GetDesc") != std::string::npos
 		// yes, it's dirty
 		|| methName.find("Release") != std::string::npos
+		|| methName.find("AddRef") != std::string::npos
+		|| methName.find("ClearState") != std::string::npos
+		|| methName.find("Flush") != std::string::npos
+		|| methName.find("SetFullscreenState") != std::string::npos
+		|| methName.find("CheckFeatureSupport") != std::string::npos
+		|| methName.find("GetDisplayModeList") != std::string::npos
+		|| methName.find("ResizeBuffers") != std::string::npos
 		)
 	{
 		return;
@@ -998,7 +1024,7 @@ void dumpMethodEvent(
 	else
 		ss << __INDENT__ << "getInterface<" << obj.name << ">(0x" << pThis << ")->" << method.name << "(\n";
 	
-	int i = 0;
+	uint32_t i = 0;
 	for (auto const &paramName : method.paramsOrdered)
 	{
 		auto iter = method.params.find(paramName);
@@ -1035,6 +1061,7 @@ void dumpMethodEvent(
 		printParamFinale(ss, method, paramValues, item.first);
 	}
 #endif
+	
 	if (method.name == "Map")
 	{
 		ss << __INDENT__ << "auto &mapTable = getMapTable();\n";
@@ -1091,7 +1118,7 @@ void dumpFunctionEvent(
 	else
 		ss << __INDENT__ << "" << method.name << "(\n";
 
-	int i = 0;
+	uint32_t i = 0;
 	for (auto const &paramName : method.paramsOrdered)
 	{
 		auto iter = method.params.find(paramName);

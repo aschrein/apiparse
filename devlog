@@ -1,0 +1,57 @@
+
+---
+  To be able to replay the trace proper lifetime management should
+be employed. Right now release calls are omited. Should omit AddRef also.
+  All the objects for a trace can be created beforehand.
+Only Map/Unmap, UpdateSubresource and Drawcalls should be replayed.
+Need to generate classification and reflection mechanism.
+
+First step is to change:
+getInterface<ID3D11Device>(0x0000025D7C250F70)->CreateBuffer(...);
+Into this:
+ID3D11Device_CreateBuffer(getInterface<ID3D11Device>(0x0000025D7C250F70), ...);
+Inside this wrapper, some dependency calculation could be done.
+
+Substitute device and swapchain in the stream
+
+160k lines take too long to compile
+
+Remove useless functions
+
+Improve compile time:
+  split source and table
+
+Wrapper function:
+  check arguments
+  add dependency information
+  marshall arguments
+  validate result
+
+Improve debugging:
+  lifetime checks
+  return code checks
+  out of bound access for serialized data
+  nested pointer checks for serialized data
+    clang tool can provide info on nested data structures
+
+---
+b30dcba
+---
+Next commit:
+
+Omit from cppgen: - soon all adapter functions will be removed 
+	AddRef
+	ClearState
+	Flush
+	SetFullscreenState
+	CheckFeatureSupport
+	GetDisplayModeList
+	ResizeBuffers
+
+Fix for(int i ... ) -> for(uint32_t i ...)
+Change .SysMemSlicePitch -> desc->Height * pSubres[subresId].SysMemPitch
+	Is it right?
+
+Proper handling of ClearRenderTargetView
+Blob alignment
+---
