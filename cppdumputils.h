@@ -311,7 +311,7 @@ struct CppDumpState
 		table << "{\"" << funcName << "\", " << funcName << "},\n";
 		header << "static void " << funcName << "();\n";
 		curFuncCounter++;
-		if (curFuncCounter > 1000)
+		if (curFuncCounter > 10000)
 		{
 			curFuncCounter = 0;
 			dump();

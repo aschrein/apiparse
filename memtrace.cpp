@@ -58,7 +58,7 @@
 #endif
 
 
-#define BLOCK_SIZE 512
+#define BLOCK_SIZE 0x1000
 
 
 template< class T >
